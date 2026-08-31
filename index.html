@@ -143,7 +143,7 @@
 
 <h1>ACORDEÓN HERO</h1>
 <div id="sub">
-  Bb · C · D · Eb · F &nbsp;|&nbsp; Teclas: <b>D F J K L</b> &nbsp;o&nbsp; toca la pantalla
+  Do · Re · Mib · Fa · Sol · La · Sib &nbsp;|&nbsp; Teclas: <b>A S D F G H J</b> &nbsp;o&nbsp; toca la pantalla
   <span id="modeTag">LIBRE</span>
 </div>
 <div id="hud">
@@ -178,7 +178,7 @@
       <h2 id="playTitle" style="color:#e8b84b; letter-spacing:2px;"></h2>
       <p id="playMeta" class="tip"></p>
       <p class="tip" style="margin-top:6px;">
-        Teclas: <b>D</b>=Bb &nbsp;<b>F</b>=C &nbsp;<b>J</b>=D &nbsp;<b>K</b>=Eb &nbsp;<b>L</b>=F &nbsp;— o toca los círculos en pantalla
+        Teclas: <b>A</b>=Do &nbsp;<b>S</b>=Re &nbsp;<b>D</b>=Mib &nbsp;<b>F</b>=Fa &nbsp;<b>G</b>=Sol &nbsp;<b>H</b>=La &nbsp;<b>J</b>=Sib &nbsp;— o toca los círculos en pantalla
       </p>
       <button class="startBtn" id="startBtn">Cargando sonidos…</button>
       <button class="backBtn" id="backFromPlay">← Volver</button>
@@ -205,11 +205,16 @@ const ctx     = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
 const FPS = 60;
 
-const LANES       = ['D','F','J','K','L'];
-const NOTE_NAMES  = ['Bb','C','D','Eb','F']; // = Do Re Mi Fa Sol en solfeo movible de Sib mayor
-const LANE_COLORS = ['#e24b4a','#d4831a','#2a9e74','#3a8ee8','#7f77dd'];
-const LANE_X      = LANES.map((_, i) => 60 + i * 130 + 35);
-const LANE_W      = 80;
+// 7 notas fijas (Do=C, Re=D, Mib=Eb, Fa=F, Sol=G, La=A, Sib=Bb).
+// La partitura original usa "Mi" (E) y "Si" (B), que no tenemos como sample:
+// Mi -> se sustituye por Mib (Eb), como pediste.
+// Si -> no hay sample de Si natural tampoco, se sustituye por Sib (Bb).
+const LANES       = ['A','S','D','F','G','H','J'];
+const NOTE_NAMES  = ['Do','Re','Mib','Fa','Sol','La','Sib'];
+const SAMPLE_NOTE = ['C','D','Eb','F','G','A','Bb']; // nombre real del archivo .wav por carril
+const LANE_COLORS = ['#e24b4a','#d4831a','#c9a227','#2a9e74','#2f8fd1','#5f6fdd','#a259c9'];
+const LANE_X      = LANES.map((_, i) => 45 + i * 95 + 30);
+const LANE_W      = 65;
 const HIT_Y       = H - 90;
 const NOTE_SPEED  = 2.8;
 
@@ -218,32 +223,64 @@ const Q = 1, E = 0.5, H2 = 2, W4 = 4;
 
 /* ══════════════════════════════════════════
    CANCIONES
-   Cada nota: [laneIndex, beats]
+   Cada nota: [laneIndex, beats, octaveUp?, staccato?]
    laneIndex -1 = silencio
-   Tonos usados por el juego: Bb C D Eb F = Do Re Mi Fa Sol (Sib mayor)
+   octaveUp = reproduce el sample una octava arriba (para las notas Do* y Re* de la hoja)
+   staccato = nota corta/picada (se suelta sola rapido, para las marcadas "|")
+   Tonos del juego: Do Re Mib Fa Sol La Sib (C D Eb F G A Bb)
 ══════════════════════════════════════════ */
 const SONGS = [
   {
     id: 'cucaracha',
     title: 'La Cucaracha',
     bpm: 108,
-    // Melodia real: grupos de corcheas repetidas en "la-cu-ca-ra-cha" (rapidas,
-    // parejas) que resuelven en una nota mas larga, seguido de una carrerita
-    // descendente Sol-Fa-Mi-Re-Do que cae en una nota sostenida (final de frase).
-    // Por eso las notas NO estan todas separadas lo mismo: hay corcheas (E),
-    // negras (Q), blancas (H2) y una redonda (W4) al cierre.
+    // Transcripcion literal de la partitura proporcionada (do re mi fa sol la si)
+    // con Mi -> Mib (no hay sample de Mi natural) y Si -> Sib (no hay sample de Si).
+    // Estructura: Estrofa A, Estrofa B, Estrofa A (igual que la hoja).
     notes: [
-      // "La cu-ca-ra-cha,"  Mi Mi Mi Re Mi
-      [2,E],[2,E],[2,E],[1,E],[2,Q],  [-1,E],
-      // "la cu-ca-ra-cha"   Mi Mi Mi Re Mi
-      [2,E],[2,E],[2,E],[1,E],[2,Q],  [-1,E],
-      // "ya no puede caminar"  Sol Fa Mi Re -> Do (sostenida)
-      [4,E],[3,E],[2,E],[1,E],[0,H2], [-1,E],
-      // "porque no tiene, porque le falta"  Mi Mi Mi Re Mi (repite variante)
-      [2,E],[2,E],[2,E],[1,E],[2,Q],  [-1,E],
-      [2,E],[2,E],[2,E],[1,E],[2,Q],  [-1,E],
-      // "las dos patitas de atrás"  Sol Fa Mi Re -> Do (cadencia final larga)
-      [4,E],[3,E],[2,E],[1,E],[0,W4],
+      // ===== Estrofa A =====
+      // do do do fa la
+      [0,E],[0,E],[0,E],[3,E],[5,Q],
+      // do do do fa la
+      [0,E],[0,E],[0,E],[3,E],[5,Q],
+      [-1,E],
+      // fa fa mi mi re re do   (mi -> mib)
+      [3,E],[3,E],[2,E],[2,E],[1,E],[1,E],[0,Q],
+      [-1,E],
+      // do do do mi so|        (mi -> mib, "|" = nota picada/corta)
+      [0,E],[0,E],[0,E],[2,E],[4,E,false,true],
+      // do do do mi so|
+      [0,E],[0,E],[0,E],[2,E],[4,E,false,true],
+      [-1,E],
+      // do* re* do* sib la so| fa   (* = una octava arriba)
+      [0,Q,true],[1,Q,true],[0,Q,true],[6,Q],[5,Q],[4,E,false,true],[3,H2],
+      [-1,H2],
+
+      // ===== Estrofa B =====
+      // do do fa fa la la do* la
+      [0,E],[0,E],[3,E],[3,E],[5,E],[5,E],[0,E,true],[5,Q],
+      [-1,E],
+      // do* re* do* sib la do* si so|   (si -> sib, no hay sample de si)
+      [0,E,true],[1,E,true],[0,E,true],[6,E],[5,E],[0,E,true],[6,E],[4,E,false,true],
+      [-1,E],
+      // do do mi mi so| so| si so|
+      [0,E],[0,E],[2,E],[2,E],[4,E,false,true],[4,E,false,true],[6,E],[4,E,false,true],
+      [-1,E],
+      // do* re* do* sib la so| fa
+      [0,Q,true],[1,Q,true],[0,Q,true],[6,Q],[5,Q],[4,E,false,true],[3,H2],
+      [-1,H2],
+
+      // ===== Estrofa A (repite) =====
+      [0,E],[0,E],[0,E],[3,E],[5,Q],
+      [0,E],[0,E],[0,E],[3,E],[5,Q],
+      [-1,E],
+      [3,E],[3,E],[2,E],[2,E],[1,E],[1,E],[0,Q],
+      [-1,E],
+      [0,E],[0,E],[0,E],[2,E],[4,E,false,true],
+      [0,E],[0,E],[0,E],[2,E],[4,E,false,true],
+      [-1,E],
+      // cadencia final -- nota mas larga (redonda) para cerrar
+      [0,Q,true],[1,Q,true],[0,Q,true],[6,Q],[5,Q],[4,E,false,true],[3,W4],
       [-1,H2]
     ]
   },
@@ -252,14 +289,14 @@ const SONGS = [
     title: 'Los Pollitos',
     bpm: 96,
     notes: [
-      [2,Q],[2,Q],[2,Q],[2,E],[3,E],[4,Q],  [-1,E],
-      [4,E],[3,E],[4,E],[3,E],[2,H2],        [-1,E],
-      [4,Q],[4,Q],[4,Q],[3,E],[4,E],[3,Q],  [-1,E],
+      [1,Q],[1,Q],[1,Q],[1,E],[2,E],[3,Q],  [-1,E],
       [3,E],[2,E],[3,E],[2,E],[1,H2],        [-1,E],
-      [1,E],[2,E],[3,E],[2,Q],[1,Q],         [-1,E],
-      [3,E],[3,E],[3,E],[3,E],[3,E],[4,Q],  [-1,E],
-      [1,E],[2,E],[3,E],[2,Q],[1,Q],         [-1,E],
-      [4,E],[4,E],[4,E],[3,E],[2,H2],        [-1,H2]
+      [3,Q],[3,Q],[3,Q],[2,E],[3,E],[2,Q],  [-1,E],
+      [2,E],[1,E],[2,E],[1,E],[0,H2],        [-1,E],
+      [0,E],[1,E],[2,E],[1,Q],[0,Q],         [-1,E],
+      [2,E],[2,E],[2,E],[2,E],[2,E],[3,Q],  [-1,E],
+      [0,E],[1,E],[2,E],[1,Q],[0,Q],         [-1,E],
+      [3,E],[3,E],[3,E],[2,E],[1,H2],        [-1,H2]
     ]
   },
   {
@@ -267,14 +304,14 @@ const SONGS = [
     title: 'La Bamba',
     bpm: 126,
     notes: [
-      [0,E],[1,E],[2,Q],[2,Q],  [-1,E],
-      [1,E],[2,E],[1,Q],[0,Q],  [-1,E],
-      [0,E],[1,E],[2,Q],[2,Q],  [-1,E],
-      [1,E],[2,E],[1,Q],[0,Q],  [-1,Q],
-      [0,E],[0,E],[0,E],[0,E],[1,Q],[2,Q], [-1,E],
-      [0,E],[0,E],[0,E],[0,E],[1,Q],[2,E],[3,E], [-1,E],
-      [2,E],[1,E],[2,E],[1,E],[2,Q], [-1,E],
-      [3,E],[4,E],[3,E],[2,E],[1,H2], [-1,H2]
+      [6,E],[0,E],[1,Q],[1,Q],  [-1,E],
+      [0,E],[1,E],[0,Q],[6,Q],  [-1,E],
+      [6,E],[0,E],[1,Q],[1,Q],  [-1,E],
+      [0,E],[1,E],[0,Q],[6,Q],  [-1,Q],
+      [6,E],[6,E],[6,E],[6,E],[0,Q],[1,Q], [-1,E],
+      [6,E],[6,E],[6,E],[6,E],[0,Q],[1,E],[2,E], [-1,E],
+      [1,E],[0,E],[1,E],[0,E],[1,Q], [-1,E],
+      [2,E],[3,E],[2,E],[1,E],[0,H2], [-1,H2]
     ]
   },
   {
@@ -282,14 +319,14 @@ const SONGS = [
     title: 'Cielito Lindo',
     bpm: 100,
     notes: [
-      [4,Q],[4,Q],[3,Q],[2,Q],          [-1,E],
-      [1,Q],[1,Q],[2,Q],[0,H2],          [-1,E],
-      [4,Q],[4,Q],[3,Q],[2,Q],          [-1,E],
-      [1,Q],[0,Q],[2,Q],[0,H2],          [-1,E],
-      [2,Q],[2,Q],[3,Q],[4,Q],          [-1,E],
-      [4,Q],[3,Q],[2,Q],[1,H2],          [-1,E],
-      [2,Q],[2,Q],[1,Q],[0,Q],          [-1,E],
-      [1,Q],[2,Q],[1,Q],[0,W4],          [-1,H2]
+      [3,Q],[3,Q],[2,Q],[1,Q],          [-1,E],
+      [0,Q],[0,Q],[1,Q],[6,H2],          [-1,E],
+      [3,Q],[3,Q],[2,Q],[1,Q],          [-1,E],
+      [0,Q],[6,Q],[1,Q],[6,H2],          [-1,E],
+      [1,Q],[1,Q],[2,Q],[3,Q],          [-1,E],
+      [3,Q],[2,Q],[1,Q],[0,H2],          [-1,E],
+      [1,Q],[1,Q],[0,Q],[6,Q],          [-1,E],
+      [0,Q],[1,Q],[0,Q],[6,W4],          [-1,H2]
     ]
   }
 ];
@@ -303,13 +340,15 @@ const activeSrcs   = NOTE_NAMES.map(() => null);
 let samplesReady   = false;
 
 // Síntesis como respaldo si no hay archivos WAV
-function synth(laneIdx, miss) {
+// Do Re Mib Fa Sol La Sib (C D Eb F G A Bb, empezando en Do central)
+function synth(laneIdx, miss, rateBase) {
   if (!audioCtx) return;
-  const freqs = [466.16, 523.25, 587.33, 622.25, 698.46];
+  const freqs = [261.63, 293.66, 311.13, 349.23, 392.00, 440.00, 466.16];
+  const mult = (rateBase || 1) * (miss ? 0.5 : 1);
   const osc  = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   osc.type = 'triangle';
-  osc.frequency.value = miss ? freqs[laneIdx] * 0.5 : freqs[laneIdx];
+  osc.frequency.value = freqs[laneIdx] * mult;
   gain.gain.setValueAtTime(miss ? 0.15 : 0.5, audioCtx.currentTime);
   gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (miss ? 0.12 : 0.45));
   osc.connect(gain);
@@ -326,7 +365,7 @@ function initAudio() {
 
 async function preloadSamples() {
   initAudio();
-  const tasks = NOTE_NAMES.map(async (name, i) => {
+  const tasks = SAMPLE_NOTE.map(async (name, i) => {
     try {
       const res = await fetch(`sounds/${name}.wav`);
       if (!res.ok) throw new Error('no file');
@@ -347,24 +386,28 @@ function enableStart() {
   btn.textContent = 'Empezar';
 }
 
-function playNote(laneIdx, miss) {
+// octaveUp: true reproduce el mismo sample al doble de velocidad (una octava
+// arriba). Se usa para las notas "Do*"/"Re*" de la partitura, que no tienen
+// su propio archivo grabado -- reutilizamos el sample base y lo pitcheamos.
+function playNote(laneIdx, miss, octaveUp) {
   if (!audioCtx) initAudio();
   if (audioCtx.state === 'suspended') audioCtx.resume();
   stopNote(laneIdx);
 
+  const rateBase = octaveUp ? 2 : 1;
   if (audioBuffers[laneIdx]) {
     const src  = audioCtx.createBufferSource();
     const gain = audioCtx.createGain();
     src.buffer = audioBuffers[laneIdx];
     src.loop   = true;
     gain.gain.value      = miss ? 0.3 : 1;
-    src.playbackRate.value = miss ? 0.75 : 1;
+    src.playbackRate.value = (miss ? 0.75 : 1) * rateBase;
     src.connect(gain);
     gain.connect(audioCtx.destination);
     src.start(0);
     activeSrcs[laneIdx] = { src, gain };
   } else {
-    synth(laneIdx, miss);
+    synth(laneIdx, miss, rateBase);
   }
 }
 
@@ -403,7 +446,7 @@ let nextGapFrames = 0;
 let songNoteIdx   = 0;
 let songDone      = false;
 
-const keyDown = { D: false, F: false, J: false, K: false, L: false };
+const keyDown = { A: false, S: false, D: false, F: false, G: false, H: false, J: false };
 
 /* ══════════════════════════════════════════
    NAVEGACIÓN DE PANTALLAS
@@ -520,10 +563,10 @@ function spawnNext() {
     songDone = true;
     return;
   }
-  const [lane] = currentSong.notes[songNoteIdx];
+  const [lane, , octaveUp, staccato] = currentSong.notes[songNoteIdx];
   songNoteIdx++;
   if (lane >= 0) {
-    notes.push({ lane, y: -22, hit: false, missed: false });
+    notes.push({ lane, y: -22, hit: false, missed: false, octaveUp: !!octaveUp, staccato: !!staccato });
   }
 }
 
@@ -573,8 +616,13 @@ function tryHit(laneIdx) {
     const pts = (perfect ? 100 : 50) + Math.min(combo * 2, 60);
     score += pts;
     burst(LANE_X[laneIdx], HIT_Y, LANE_COLORS[laneIdx]);
-    playNote(laneIdx, false);
+    playNote(laneIdx, false, best.octaveUp);
     showFeedback(LANE_X[laneIdx], HIT_Y - 30, perfect ? 'PERFECT' : 'GOOD', perfect ? '#e8b84b' : '#a8e84b');
+    if (best.staccato) {
+      // nota "picada": se suelta sola rapido sin importar si sigues
+      // presionando la tecla, para que suene corta como marca la partitura.
+      setTimeout(() => stopNote(laneIdx), 140);
+    }
   } else {
     combo = 0;
     playNote(laneIdx, true);
@@ -709,8 +757,9 @@ function draw() {
     if (n.hit) return;
     const x = LANE_X[n.lane];
     const missed = n.missed;
+    const radius = n.staccato ? 15 : 20; // notas picadas se ven mas chicas
     ctx.beginPath();
-    ctx.arc(x, n.y, 20, 0, Math.PI * 2);
+    ctx.arc(x, n.y, radius, 0, Math.PI * 2);
     ctx.fillStyle = missed ? '#2a2520' : LANE_COLORS[n.lane];
     ctx.fill();
     if (!missed) {
@@ -719,12 +768,22 @@ function draw() {
     }
     ctx.strokeStyle = missed ? '#3a3530' : '#fff';
     ctx.lineWidth = 2;
+    if (n.staccato) ctx.setLineDash([3, 3]); // borde punteado = nota corta
     ctx.stroke();
+    ctx.setLineDash([]);
     ctx.shadowBlur = 0;
+    if (n.octaveUp) {
+      // anillo extra = una octava arriba (Do*/Re* de la partitura)
+      ctx.beginPath();
+      ctx.arc(x, n.y, radius + 5, 0, Math.PI * 2);
+      ctx.strokeStyle = '#fff8';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
     ctx.fillStyle = missed ? '#4a4540' : '#fff';
     ctx.font = 'bold 11px Arial';
     ctx.textBaseline = 'middle';
-    ctx.fillText(NOTE_NAMES[n.lane], x, n.y);
+    ctx.fillText(NOTE_NAMES[n.lane] + (n.octaveUp ? "'" : ''), x, n.y);
   });
 
   particles.forEach(p => {
