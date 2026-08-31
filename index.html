@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Acordeón Hero</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -15,6 +16,7 @@
     min-height: 100vh;
     overflow: hidden;
     user-select: none;
+    touch-action: none; /* evita scroll/zoom al tocar el canvas en movil */
   }
   h1 {
     margin: 14px 0 2px;
@@ -37,13 +39,16 @@
     font-size: 16px;
   }
   #hud span { color: #e8b84b; font-weight: bold; }
-  #wrap { position: relative; }
+  #wrap { position: relative; max-width: 95vw; }
   #gameCanvas {
     background: linear-gradient(180deg, #211810 0%, #140f0a 80%, #0a0704 100%);
     border: 2px solid #3a3028;
     border-radius: 10px;
     box-shadow: 0 0 40px rgba(232,184,75,0.15), inset 0 0 60px rgba(0,0,0,0.4);
     display: block;
+    max-width: 100%;
+    height: auto;
+    touch-action: none;
   }
 
   /* ───── overlay ───── */
@@ -138,7 +143,7 @@
 
 <h1>ACORDEÓN HERO</h1>
 <div id="sub">
-  Bb · C · D · Eb · F &nbsp;|&nbsp; Teclas: <b>D F J K L</b>
+  Bb · C · D · Eb · F &nbsp;|&nbsp; Teclas: <b>D F J K L</b> &nbsp;o&nbsp; toca la pantalla
   <span id="modeTag">LIBRE</span>
 </div>
 <div id="hud">
@@ -173,7 +178,7 @@
       <h2 id="playTitle" style="color:#e8b84b; letter-spacing:2px;"></h2>
       <p id="playMeta" class="tip"></p>
       <p class="tip" style="margin-top:6px;">
-        Teclas: <b>D</b>=Bb &nbsp;<b>F</b>=C &nbsp;<b>J</b>=D &nbsp;<b>K</b>=Eb &nbsp;<b>L</b>=F
+        Teclas: <b>D</b>=Bb &nbsp;<b>F</b>=C &nbsp;<b>J</b>=D &nbsp;<b>K</b>=Eb &nbsp;<b>L</b>=F &nbsp;— o toca los círculos en pantalla
       </p>
       <button class="startBtn" id="startBtn">Cargando sonidos…</button>
       <button class="backBtn" id="backFromPlay">← Volver</button>
@@ -201,7 +206,7 @@ const W = canvas.width, H = canvas.height;
 const FPS = 60;
 
 const LANES       = ['D','F','J','K','L'];
-const NOTE_NAMES  = ['Bb','C','D','Eb','F'];
+const NOTE_NAMES  = ['Bb','C','D','Eb','F']; // = Do Re Mi Fa Sol en solfeo movible de Sib mayor
 const LANE_COLORS = ['#e24b4a','#d4831a','#2a9e74','#3a8ee8','#7f77dd'];
 const LANE_X      = LANES.map((_, i) => 60 + i * 130 + 35);
 const LANE_W      = 80;
@@ -215,19 +220,30 @@ const Q = 1, E = 0.5, H2 = 2, W4 = 4;
    CANCIONES
    Cada nota: [laneIndex, beats]
    laneIndex -1 = silencio
+   Tonos usados por el juego: Bb C D Eb F = Do Re Mi Fa Sol (Sib mayor)
 ══════════════════════════════════════════ */
 const SONGS = [
   {
     id: 'cucaracha',
     title: 'La Cucaracha',
     bpm: 108,
+    // Melodia real: grupos de corcheas repetidas en "la-cu-ca-ra-cha" (rapidas,
+    // parejas) que resuelven en una nota mas larga, seguido de una carrerita
+    // descendente Sol-Fa-Mi-Re-Do que cae en una nota sostenida (final de frase).
+    // Por eso las notas NO estan todas separadas lo mismo: hay corcheas (E),
+    // negras (Q), blancas (H2) y una redonda (W4) al cierre.
     notes: [
-      [0,Q],[0,Q],[0,Q],[1,Q],[2,Q], [-1,E],
-      [2,Q],[1,Q],[0,Q],[2,Q],[4,Q], [-1,E],
-      [4,Q],[3,Q],[2,Q],[1,Q],       [-1,E],
-      [0,Q],[0,Q],[0,Q],[1,Q],[2,Q], [-1,E],
-      [2,Q],[1,Q],[0,Q],[2,Q],[1,Q], [-1,E],
-      [0,W4],
+      // "La cu-ca-ra-cha,"  Mi Mi Mi Re Mi
+      [2,E],[2,E],[2,E],[1,E],[2,Q],  [-1,E],
+      // "la cu-ca-ra-cha"   Mi Mi Mi Re Mi
+      [2,E],[2,E],[2,E],[1,E],[2,Q],  [-1,E],
+      // "ya no puede caminar"  Sol Fa Mi Re -> Do (sostenida)
+      [4,E],[3,E],[2,E],[1,E],[0,H2], [-1,E],
+      // "porque no tiene, porque le falta"  Mi Mi Mi Re Mi (repite variante)
+      [2,E],[2,E],[2,E],[1,E],[2,Q],  [-1,E],
+      [2,E],[2,E],[2,E],[1,E],[2,Q],  [-1,E],
+      // "las dos patitas de atrás"  Sol Fa Mi Re -> Do (cadencia final larga)
+      [4,E],[3,E],[2,E],[1,E],[0,W4],
       [-1,H2]
     ]
   },
@@ -236,19 +252,13 @@ const SONGS = [
     title: 'Los Pollitos',
     bpm: 96,
     notes: [
-      // Los po-lli-tos di-cen  pío pío pío
       [2,Q],[2,Q],[2,Q],[2,E],[3,E],[4,Q],  [-1,E],
       [4,E],[3,E],[4,E],[3,E],[2,H2],        [-1,E],
-      // cuan-do tie-nen ham-bre  cuan-do tie-nen frío
       [4,Q],[4,Q],[4,Q],[3,E],[4,E],[3,Q],  [-1,E],
       [3,E],[2,E],[3,E],[2,E],[1,H2],        [-1,E],
-      // La ma-má les bus-ca
       [1,E],[2,E],[3,E],[2,Q],[1,Q],         [-1,E],
-      // el tri-go y el maíz
       [3,E],[3,E],[3,E],[3,E],[3,E],[4,Q],  [-1,E],
-      // les da su co-mi-da
       [1,E],[2,E],[3,E],[2,Q],[1,Q],         [-1,E],
-      // y les presta abri-go
       [4,E],[4,E],[4,E],[3,E],[2,H2],        [-1,H2]
     ]
   },
@@ -257,18 +267,13 @@ const SONGS = [
     title: 'La Bamba',
     bpm: 126,
     notes: [
-      // riff principal (Bb C D)
       [0,E],[1,E],[2,Q],[2,Q],  [-1,E],
       [1,E],[2,E],[1,Q],[0,Q],  [-1,E],
       [0,E],[1,E],[2,Q],[2,Q],  [-1,E],
       [1,E],[2,E],[1,Q],[0,Q],  [-1,Q],
-      // pa ra bai-lar la bam-ba
       [0,E],[0,E],[0,E],[0,E],[1,Q],[2,Q], [-1,E],
-      // pa ra bai-lar la bam-ba se ne-ce-si-ta
       [0,E],[0,E],[0,E],[0,E],[1,Q],[2,E],[3,E], [-1,E],
-      // u-na po-ca de gra-cia
       [2,E],[1,E],[2,E],[1,E],[2,Q], [-1,E],
-      // y o-tra co-si-ta
       [3,E],[4,E],[3,E],[2,E],[1,H2], [-1,H2]
     ]
   },
@@ -277,16 +282,12 @@ const SONGS = [
     title: 'Cielito Lindo',
     bpm: 100,
     notes: [
-      // De la Sie-rra Mo-re-na
       [4,Q],[4,Q],[3,Q],[2,Q],          [-1,E],
       [1,Q],[1,Q],[2,Q],[0,H2],          [-1,E],
-      // Cie-li-to lin-do vie-nen ba-jan-do
       [4,Q],[4,Q],[3,Q],[2,Q],          [-1,E],
       [1,Q],[0,Q],[2,Q],[0,H2],          [-1,E],
-      // Ay, ay, ay, ay
       [2,Q],[2,Q],[3,Q],[4,Q],          [-1,E],
       [4,Q],[3,Q],[2,Q],[1,H2],          [-1,E],
-      // can-ta y no llo-res
       [2,Q],[2,Q],[1,Q],[0,Q],          [-1,E],
       [1,Q],[2,Q],[1,Q],[0,W4],          [-1,H2]
     ]
@@ -325,16 +326,14 @@ function initAudio() {
 
 async function preloadSamples() {
   initAudio();
-  let anyLoaded = false;
   const tasks = NOTE_NAMES.map(async (name, i) => {
     try {
       const res = await fetch(`sounds/${name}.wav`);
       if (!res.ok) throw new Error('no file');
       const arr = await res.arrayBuffer();
       audioBuffers[i] = await audioCtx.decodeAudioData(arr);
-      anyLoaded = true;
     } catch {
-      // sin archivo → usaremos síntesis
+      // sin archivo -> usaremos sintesis
     }
   });
   await Promise.all(tasks);
@@ -378,10 +377,6 @@ function stopNote(laneIdx) {
   a.gain.gain.linearRampToValueAtTime(0, now + 0.03);
   a.src.stop(now + 0.04);
   activeSrcs[laneIdx] = null;
-}
-
-function stopAllNotes() {
-  NOTE_NAMES.forEach((_, i) => stopNote(i));
 }
 
 // Desbloquear contexto de audio en iOS/Safari
@@ -517,7 +512,6 @@ function framesForNextNote() {
   if (mode === 'free') {
     return FREE_SPAWN_MIN + Math.floor(Math.random() * (FREE_SPAWN_MAX - FREE_SPAWN_MIN));
   }
-  // En modo canción, busca la siguiente nota (incluidos silencios)
   if (songNoteIdx >= currentSong.notes.length) return Infinity;
   const [, beats] = currentSong.notes[songNoteIdx];
   const fpb = FPS * (60 / currentSong.bpm);
@@ -530,7 +524,6 @@ function spawnNext() {
     notes.push({ lane, y: -22, hit: false, missed: false });
     return;
   }
-  // Modo canción
   if (songNoteIdx >= currentSong.notes.length) {
     songDone = true;
     return;
@@ -585,7 +578,6 @@ function tryHit(laneIdx) {
   } else {
     combo = 0;
     playNote(laneIdx, true);
-    // no contar como error si es modo libre (no había nota)
     if (mode === 'song') { misses++; total++; }
   }
   updateHUD();
@@ -605,7 +597,6 @@ function showFeedback(x, y, text, color) {
 function update() {
   if (!running) return;
 
-  // Spawning
   spawnTimer++;
   if (spawnTimer >= nextGapFrames) {
     spawnTimer = 0;
@@ -613,7 +604,6 @@ function update() {
     nextGapFrames = framesForNextNote();
   }
 
-  // Mover notas
   notes.forEach(n => {
     if (n.hit || n.missed) return;
     n.y += NOTE_SPEED;
@@ -626,7 +616,6 @@ function update() {
   });
   notes = notes.filter(n => n.y < H + 40 && !(n.hit));
 
-  // Partículas
   particles.forEach(p => {
     p.x  += p.vx;
     p.y  += p.vy;
@@ -635,13 +624,11 @@ function update() {
   });
   particles = particles.filter(p => p.life > 0);
 
-  // Floats
   floats.forEach(f => { f.y -= 0.8; f.life -= 0.035; });
   for (let i = floats.length - 1; i >= 0; i--) {
     if (floats[i].life <= 0) floats.splice(i, 1);
   }
 
-  // Fin de canción
   if (mode === 'song' && songDone && notes.length === 0) {
     setTimeout(endGame, 600);
     running = false;
@@ -654,7 +641,6 @@ function update() {
 function draw() {
   ctx.clearRect(0, 0, W, H);
 
-  // Carriles
   for (let i = 0; i < LANES.length; i++) {
     const x = LANE_X[i] - LANE_W / 2;
     ctx.fillStyle = keyDown[LANES[i]]
@@ -662,7 +648,6 @@ function draw() {
       : 'rgba(255,255,255,0.02)';
     ctx.fillRect(x, 0, LANE_W, H);
 
-    // Línea divisoria sutil
     ctx.strokeStyle = 'rgba(255,255,255,0.05)';
     ctx.lineWidth = 1;
     if (i > 0) {
@@ -672,7 +657,6 @@ function draw() {
       ctx.stroke();
     }
 
-    // Etiqueta nota arriba
     ctx.fillStyle = LANE_COLORS[i] + 'aa';
     ctx.font = 'bold 13px Arial';
     ctx.textAlign = 'center';
@@ -680,7 +664,6 @@ function draw() {
     ctx.fillText(NOTE_NAMES[i], LANE_X[i], 10);
   }
 
-  // Línea de golpe
   ctx.strokeStyle = '#e8b84b';
   ctx.lineWidth = 2.5;
   ctx.shadowColor = '#e8b84b';
@@ -691,7 +674,6 @@ function draw() {
   ctx.stroke();
   ctx.shadowBlur = 0;
 
-  // Teclas de golpe
   for (let i = 0; i < LANES.length; i++) {
     const x = LANE_X[i];
     const pressed = keyDown[LANES[i]];
@@ -719,7 +701,6 @@ function draw() {
     ctx.fillText(NOTE_NAMES[i], x, HIT_Y + 32);
   }
 
-  // Notas
   notes.forEach(n => {
     if (n.hit) return;
     const x = LANE_X[n.lane];
@@ -742,7 +723,6 @@ function draw() {
     ctx.fillText(NOTE_NAMES[n.lane], x, n.y);
   });
 
-  // Partículas
   particles.forEach(p => {
     ctx.globalAlpha = Math.max(0, p.life);
     ctx.fillStyle   = p.color;
@@ -752,7 +732,6 @@ function draw() {
   });
   ctx.globalAlpha = 1;
 
-  // Texto flotante (PERFECT / GOOD)
   floats.forEach(f => {
     ctx.globalAlpha = Math.max(0, f.life);
     ctx.fillStyle   = f.color;
@@ -774,7 +753,7 @@ function updateHUD() {
 }
 
 /* ══════════════════════════════════════════
-   INPUT
+   INPUT — TECLADO
 ══════════════════════════════════════════ */
 document.addEventListener('keydown', e => {
   if (e.repeat) return;
@@ -794,6 +773,71 @@ document.addEventListener('keyup', e => {
 });
 
 /* ══════════════════════════════════════════
+   INPUT — TOUCH (movil / tablet)
+   Cada dedo se rastrea por su touch.identifier, para poder tocar
+   varios carriles a la vez y soltar cada uno independientemente.
+══════════════════════════════════════════ */
+const touchLaneMap = new Map(); // identifier -> laneIdx
+
+function canvasXFromTouch(touch) {
+  const rect = canvas.getBoundingClientRect();
+  // el canvas puede estar escalado por CSS (max-width:100%), asi que
+  // convertimos la posicion del toque a coordenadas reales del canvas
+  const scaleX = canvas.width / rect.width;
+  return (touch.clientX - rect.left) * scaleX;
+}
+
+function laneFromX(x) {
+  let best = 0, bestDist = Infinity;
+  LANE_X.forEach((lx, i) => {
+    const d = Math.abs(lx - x);
+    if (d < bestDist) { bestDist = d; best = i; }
+  });
+  return best;
+}
+
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  for (const touch of e.changedTouches) {
+    const x = canvasXFromTouch(touch);
+    const lane = laneFromX(x);
+    touchLaneMap.set(touch.identifier, lane);
+    keyDown[LANES[lane]] = true;
+    tryHit(lane);
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchend', e => {
+  e.preventDefault();
+  for (const touch of e.changedTouches) {
+    const lane = touchLaneMap.get(touch.identifier);
+    if (lane === undefined) continue;
+    touchLaneMap.delete(touch.identifier);
+    // solo soltar la tecla si ningun otro dedo sigue tocando ese mismo carril
+    const stillPressed = [...touchLaneMap.values()].includes(lane);
+    if (!stillPressed) {
+      keyDown[LANES[lane]] = false;
+      stopNote(lane);
+    }
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchcancel', e => {
+  for (const touch of e.changedTouches) {
+    const lane = touchLaneMap.get(touch.identifier);
+    if (lane === undefined) continue;
+    touchLaneMap.delete(touch.identifier);
+    const stillPressed = [...touchLaneMap.values()].includes(lane);
+    if (!stillPressed) {
+      keyDown[LANES[lane]] = false;
+      stopNote(lane);
+    }
+  }
+}, { passive: false });
+
+/* ══════════════════════════════════════════
    LOOP PRINCIPAL
 ══════════════════════════════════════════ */
 function loop() {
@@ -805,9 +849,8 @@ function loop() {
 /* ══════════════════════════════════════════
    INICIO
 ══════════════════════════════════════════ */
-// Deshabilitar botón hasta que carguen samples
 document.getElementById('startBtn').disabled = true;
-preloadSamples();   // intenta cargar WAVs; si no hay, usa síntesis y habilita igual
+preloadSamples();
 loop();
 </script>
 </body>
