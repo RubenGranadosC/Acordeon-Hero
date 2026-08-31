@@ -117,6 +117,7 @@ const laneKeyState = {D:false,F:false,J:false,K:false};
 // (ej. NOTE_NAMES[0] = 'Bb' -> carga sounds/Bb.wav).
 const SAMPLE_FILES = NOTE_NAMES.map(note => `sounds/${note}.wav`);
 const audioBuffers = [null, null, null, null];
+const activeSources = [null, null, null, null]; // fuente activa por carril, para loop/stop
 let audioCtx = null;
 let samplesReady = false;
 let audioUnlocked = false;
@@ -162,19 +163,39 @@ function playNote(laneIdx, missSound, t0) {
     return;
   }
   if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  // si ya habia una nota sonando en este carril, la cortamos primero
+  stopNote(laneIdx);
+
   const src = audioCtx.createBufferSource();
   src.buffer = audioBuffers[laneIdx];
+  src.loop = true; // se repite mientras la tecla siga presionada
   const gain = audioCtx.createGain();
   gain.gain.value = missSound ? 0.35 : 1;
   src.playbackRate.value = missSound ? 0.85 : 1;
   src.connect(gain);
   gain.connect(audioCtx.destination);
   src.start(0);
+  activeSources[laneIdx] = { src, gain };
   if (t0 !== undefined) {
     console.log(`[audio] reproduciendo ${file} | latencia keydown->start: ${(performance.now() - t0).toFixed(2)} ms`);
   } else {
     console.log(`[audio] reproduciendo ${file}`);
   }
+}
+
+// Corta la nota que este sonando en un carril (con un fade corto para
+// evitar el "click" de cortar el audio abruptamente).
+function stopNote(laneIdx) {
+  const active = activeSources[laneIdx];
+  if (!active) return;
+  const { src, gain } = active;
+  const now = audioCtx.currentTime;
+  gain.gain.cancelScheduledValues(now);
+  gain.gain.setValueAtTime(gain.gain.value, now);
+  gain.gain.linearRampToValueAtTime(0, now + 0.03);
+  src.stop(now + 0.03);
+  activeSources[laneIdx] = null;
 }
 
 function spawnFromSong() {
@@ -349,7 +370,10 @@ document.addEventListener('keydown', (e) => {
 });
 document.addEventListener('keyup', (e) => {
   const k = e.key.toUpperCase();
-  if (LANES.includes(k)) laneKeyState[k] = false;
+  if (LANES.includes(k)) {
+    laneKeyState[k] = false;
+    stopNote(LANES.indexOf(k));
+  }
 });
 
 document.getElementById('startBtn').addEventListener('click', () => {
