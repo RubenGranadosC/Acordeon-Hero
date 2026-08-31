@@ -112,35 +112,35 @@ let running = false;
 const laneKeyState = {D:false,F:false,J:false,K:false};
 
 // ===== Sistema de audio de baja latencia (Web Audio API) =====
-const SAMPLE_FILES = ['sounds/Bb.m4a', 'sounds/C.m4a', 'sounds/D.m4a', 'sounds/Eb.m4a'];
+// Los samples ya vienen en WAV, sin silencio inicial (recortados de antemano).
+// El sample de cada carril se determina por el NOMBRE de la nota en NOTE_NAMES
+// (ej. NOTE_NAMES[0] = 'Bb' -> carga sounds/Bb.wav).
+const SAMPLE_FILES = NOTE_NAMES.map(note => `sounds/${note}.wav`);
 const audioBuffers = [null, null, null, null];
 let audioCtx = null;
 let samplesReady = false;
 let audioUnlocked = false;
 
-// 1) Crear el AudioContext y empezar a precargar/decodificar YA, sin esperar
-//    al click de "Empezar" -- se hace en paralelo mientras el usuario lee la pantalla.
 function initAudioContext() {
   if (audioCtx) return;
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
 }
 
+// Carga y decodifica los 4 WAV UNA sola vez, antes de que se pueda jugar.
+// No hay fetch ni decodeAudioData en ningun otro lugar del codigo.
 async function preloadSamples() {
   initAudioContext();
   const loadOne = async (src, i) => {
     const res = await fetch(src);
     const arrBuf = await res.arrayBuffer();
-    // decodeAudioData: se decodifica UNA sola vez aqui, nunca en el keydown
     audioBuffers[i] = await audioCtx.decodeAudioData(arrBuf);
+    console.log(`[audio] precargado y decodificado: ${src}`);
   };
   await Promise.all(SAMPLE_FILES.map(loadOne));
   samplesReady = true;
   onSamplesReady();
 }
 
-// 6) Desbloquear el AudioContext en la PRIMERA interaccion del usuario
-//    (requisito de autoplay de los navegadores). Se hace con un listener
-//    de una sola vez en pointerdown/keydown, independiente de la carga.
 function unlockAudioOnce() {
   if (audioUnlocked) return;
   audioUnlocked = true;
@@ -152,10 +152,15 @@ function unlockAudioOnce() {
 window.addEventListener('pointerdown', unlockAudioOnce, { once: true });
 window.addEventListener('keydown', unlockAudioOnce, { once: true });
 
-// 5) Reproduccion inmediata: solo crea un BufferSource (barato) a partir
-//    del AudioBuffer ya decodificado en memoria. Nada de fetch/decode aqui.
-function playNote(laneIdx, missSound) {
-  if (!audioCtx || !audioBuffers[laneIdx]) return;
+// Reproduccion: SOLO crea un BufferSource desde el buffer ya en memoria
+// y lo arranca. Nada de fetch, decode, setTimeout, promesas ni RAF entre
+// el keydown y el start(0) -- todo es sincrono.
+function playNote(laneIdx, missSound, t0) {
+  const file = SAMPLE_FILES[laneIdx];
+  if (!audioCtx || !audioBuffers[laneIdx]) {
+    console.warn(`[audio] buffer no listo todavia para ${file}`);
+    return;
+  }
   if (audioCtx.state === 'suspended') audioCtx.resume();
   const src = audioCtx.createBufferSource();
   src.buffer = audioBuffers[laneIdx];
@@ -164,7 +169,12 @@ function playNote(laneIdx, missSound) {
   src.playbackRate.value = missSound ? 0.85 : 1;
   src.connect(gain);
   gain.connect(audioCtx.destination);
-  src.start(0); // arranca en el siguiente bloque de audio, minima latencia
+  src.start(0);
+  if (t0 !== undefined) {
+    console.log(`[audio] reproduciendo ${file} | latencia keydown->start: ${(performance.now() - t0).toFixed(2)} ms`);
+  } else {
+    console.log(`[audio] reproduciendo ${file}`);
+  }
 }
 
 function spawnFromSong() {
@@ -294,7 +304,7 @@ function loop() {
   requestAnimationFrame(loop);
 }
 
-function tryHit(laneIdx) {
+function tryHit(laneIdx, t0) {
   if (!running) return;
   let best = null, bestDist = 9999;
   notes.forEach(n => {
@@ -312,10 +322,10 @@ function tryHit(laneIdx) {
     const pts = bestDist < 15 ? 100 : 50;
     score += pts + Math.floor(combo / 5) * 5;
     addParticles(LANE_X[laneIdx], HIT_Y, LANE_COLORS[laneIdx]);
-    playNote(laneIdx, false);
+    playNote(laneIdx, false, t0);
   } else {
     combo = 0;
-    playNote(laneIdx, true);
+    playNote(laneIdx, true, t0);
   }
   updateHUD();
 }
@@ -328,11 +338,12 @@ function updateHUD() {
 }
 
 document.addEventListener('keydown', (e) => {
+  const t0 = performance.now(); // medicion de latencia: arranca justo en el evento
   const k = e.key.toUpperCase();
   if (LANES.includes(k)) {
     if (!laneKeyState[k]) {
       laneKeyState[k] = true;
-      tryHit(LANES.indexOf(k));
+      tryHit(LANES.indexOf(k), t0);
     }
   }
 });
