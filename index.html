@@ -64,7 +64,7 @@
 </head>
 <body>
 <h1>ACORDEON HERO</h1>
-<div id="sub">Escala de Sib mayor (Bb, C, D, F) — Melodia: <b>La Cucaracha</b><br>Teclas: <b>D F J K</b></div>
+<div id="sub">Escala de Sib mayor (Bb, C, D, Eb) — Melodia: <b>La Cucaracha</b> (<span id="songDuration"></span>)<br>Teclas: <b>D F J K</b></div>
 <div id="hud">
   <div>Puntos: <span id="score">0</span></div>
   <div>Combo: <span id="comboVal">0</span></div>
@@ -84,7 +84,7 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
 
-// Escala de Sib mayor (Bb C D Eb F G A) - usamos 4 grados: Bb, C, D, F
+// Escala de Sib mayor (Bb C D Eb F G A) - usamos 4 grados: Bb(Do) C(Re) D(Mi) Eb(Fa)
 const LANES = ['D','F','J','K'];
 const NOTE_NAMES = ['Bb','C','D','Eb'];
 const LANE_FREQS = [466.16, 523.25, 587.33, 622.25]; // Bb4, C5, D5, Eb5 (no se usa para audio, solo referencia)
@@ -93,20 +93,40 @@ const LANE_X = LANES.map((_, i) => 60 + i * 150 + 40);
 const LANE_W = 90;
 const HIT_Y = H - 90;
 const NOTE_SPEED = 2.6;
-const SPAWN_GAP = 42;
+const FPS = 60;
+const BPM = 104; // tempo tipico de "La Cucaracha"
+const FRAMES_PER_BEAT = FPS * (60 / BPM);
 
-// Melodia de "La Cucaracha" mapeada a 4 grados de Sib mayor: 0=Bb 1=C 2=D 3=F
+// Duraciones de nota en "beats" (negra = 1, corchea = 0.5, blanca = 2, etc.)
+const EIGHTH = 0.5, QUARTER = 1, HALF = 2;
+
+// Melodia de "La Cucaracha" con solfeo movible en Sib mayor (Do=Bb, Re=C, Mi=D, Fa=Eb)
+// Cada entrada es [grado, duracion_en_beats]. grado -1 = silencio.
+// 0=Bb(Do) 1=C(Re) 2=D(Mi) 3=Eb(Fa)
 const SONG = [
-  3,3,3, 1,3,   2,3,1,0,   3,3,3, 1,3,   2,1,0,
-  0,0,0, 1,0,   2,0,0,3,   2,1,0,        0,-1,
-  3,3,3, 1,3,   2,3,1,0,   3,3,3, 1,3,   2,1,0,
-  0,0,0, 1,0,   2,0,0,3,   2,1,0,        0,-1,-1,-1
+  // "La cu-ca-ra-cha, la cu-ca-ra-cha" (frase 1, se repite)
+  [2, EIGHTH],[2, EIGHTH],[2, EIGHTH],[2, EIGHTH],   [1, EIGHTH],[2, QUARTER],
+  [3, EIGHTH],[3, EIGHTH],[2, EIGHTH],[1, EIGHTH],   [0, HALF],
+  [2, EIGHTH],[2, EIGHTH],[2, EIGHTH],[2, EIGHTH],   [1, EIGHTH],[2, QUARTER],
+  [3, EIGHTH],[3, EIGHTH],[2, EIGHTH],[1, EIGHTH],   [0, HALF],
+  // "ya no puede caminar" (frase 2)
+  [0, EIGHTH],[0, EIGHTH],[0, EIGHTH],[0, EIGHTH],   [1, EIGHTH],[0, QUARTER],
+  [3, EIGHTH],[2, EIGHTH],[1, EIGHTH],[0, HALF],
+  [-1, QUARTER],
+  // repite frase 2 para cerrar
+  [0, EIGHTH],[0, EIGHTH],[0, EIGHTH],[0, EIGHTH],   [1, EIGHTH],[0, QUARTER],
+  [3, EIGHTH],[2, EIGHTH],[1, EIGHTH],[0, HALF],
+  [-1, HALF]
 ];
+
+const SONG_TOTAL_BEATS = SONG.reduce((sum, [, dur]) => sum + dur, 0);
+const SONG_DURATION_SEC = SONG_TOTAL_BEATS * (60 / BPM);
 
 let notes = [];
 let particles = [];
 let score = 0, combo = 0, hits = 0, total = 0;
 let spawnTimer = 0;
+let nextSpawnGap = 0;
 let songIndex = 0;
 let running = false;
 const laneKeyState = {D:false,F:false,J:false,K:false};
@@ -199,11 +219,17 @@ function stopNote(laneIdx) {
 }
 
 function spawnFromSong() {
-  const lane = SONG[songIndex % SONG.length];
+  const [lane] = SONG[songIndex % SONG.length];
   songIndex++;
   if (lane >= 0) {
     notes.push({ lane, y: -20, hit: false, missed: false });
   }
+}
+
+function currentNoteFrames() {
+  // frames que dura la nota actual de la cancion, segun su valor ritmico
+  const [, beats] = SONG[songIndex % SONG.length];
+  return Math.round(beats * FRAMES_PER_BEAT);
 }
 
 function addParticles(x, y, color) {
@@ -221,8 +247,9 @@ function update() {
   if (!running) return;
 
   spawnTimer++;
-  if (spawnTimer > SPAWN_GAP) {
+  if (spawnTimer > nextSpawnGap) {
     spawnTimer = 0;
+    nextSpawnGap = currentNoteFrames();
     spawnFromSong();
   }
 
@@ -382,7 +409,7 @@ document.getElementById('startBtn').addEventListener('click', () => {
   document.getElementById('overlay').style.display = 'none';
   running = true;
   notes = []; particles = []; score = 0; combo = 0; hits = 0; total = 0;
-  spawnTimer = 0; songIndex = 0;
+  spawnTimer = 0; songIndex = 0; nextSpawnGap = currentNoteFrames();
   updateHUD();
 });
 
@@ -398,6 +425,7 @@ const startBtn = document.getElementById('startBtn');
 startBtn.disabled = true;
 startBtn.textContent = 'Cargando sonidos...';
 preloadSamples();
+document.getElementById('songDuration').textContent = `${SONG_DURATION_SEC.toFixed(1)}s a ${BPM} BPM`;
 
 loop();
 </script>
