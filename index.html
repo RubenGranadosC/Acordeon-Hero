@@ -106,27 +106,35 @@ let songIndex = 0;
 let running = false;
 const laneKeyState = {D:false,F:false,J:false,K:false};
 
-// Samples reales de acordeón por nota
+// Samples reales de acordeón, precargados y decodificados con Web Audio API
+// para reproduccion de baja latencia (nada de <audio>.play() que tiene delay)
 const SAMPLE_FILES = ['sounds/Bb.m4a', 'sounds/C.m4a', 'sounds/D.m4a', 'sounds/F.m4a'];
-const audioBuffers = SAMPLE_FILES.map(src => {
-  const arr = [];
-  for (let i = 0; i < 4; i++) {
-    const a = new Audio(src);
-    a.preload = 'auto';
-    arr.push(a);
-  }
-  return arr; // pool de 4 instancias por nota para permitir solapes rapidos
-});
-const poolIndex = [0,0,0,0];
+let audioCtx = null;
+const audioBuffers = [null, null, null, null];
+let samplesReady = false;
+
+async function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  await Promise.all(SAMPLE_FILES.map(async (src, i) => {
+    const res = await fetch(src);
+    const arrBuf = await res.arrayBuffer();
+    audioBuffers[i] = await audioCtx.decodeAudioData(arrBuf);
+  }));
+  samplesReady = true;
+}
 
 function playNote(laneIdx, missSound) {
-  const pool = audioBuffers[laneIdx];
-  const a = pool[poolIndex[laneIdx]];
-  poolIndex[laneIdx] = (poolIndex[laneIdx] + 1) % pool.length;
-  a.currentTime = 0;
-  a.volume = missSound ? 0.35 : 1;
-  a.playbackRate = missSound ? 0.85 : 1;
-  a.play().catch(()=>{});
+  if (!audioCtx || !audioBuffers[laneIdx]) return;
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const src = audioCtx.createBufferSource();
+  src.buffer = audioBuffers[laneIdx];
+  const gain = audioCtx.createGain();
+  gain.gain.value = missSound ? 0.35 : 1;
+  src.playbackRate.value = missSound ? 0.85 : 1;
+  src.connect(gain);
+  gain.connect(audioCtx.destination);
+  src.start(0);
 }
 
 function spawnFromSong() {
@@ -303,7 +311,11 @@ document.addEventListener('keyup', (e) => {
   if (LANES.includes(k)) laneKeyState[k] = false;
 });
 
-document.getElementById('startBtn').addEventListener('click', () => {
+document.getElementById('startBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('startBtn');
+  btn.textContent = 'Cargando...';
+  btn.disabled = true;
+  await initAudio();
   document.getElementById('overlay').style.display = 'none';
   running = true;
   notes = []; particles = []; score = 0; combo = 0; hits = 0; total = 0;
