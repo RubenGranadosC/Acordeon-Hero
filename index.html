@@ -102,7 +102,7 @@
 
 <h1>ACORDEÓN HERO</h1>
 <div id="sub">
-  Bb · C · D · Eb · F · G · A · Bb5 &nbsp;|&nbsp; Teclas: <b>A S D F G H J</b> &nbsp;o&nbsp; toca la pantalla
+  Bb · C · D · Eb · F · G · A · Bb5 &nbsp;|&nbsp; Teclas: <b>A S D F G H J K</b> &nbsp;o&nbsp; toca la pantalla
   <span id="modeTag">LIBRE</span>
 </div>
 <div id="hud">
@@ -132,7 +132,7 @@
       <h2 id="playTitle" style="color:#e8b84b; letter-spacing:2px;"></h2>
       <p id="playMeta" class="tip"></p>
       <p class="tip" style="margin-top:6px;">
-        <b>A</b>=Bb &nbsp;<b>S</b>=C &nbsp;<b>D</b>=D &nbsp;<b>F</b>=Eb &nbsp;<b>G</b>=F &nbsp;<b>H</b>=G &nbsp;<b>J</b>=A &nbsp;— o toca los círculos
+        <b>A</b>=Bb &nbsp;<b>S</b>=C &nbsp;<b>D</b>=D &nbsp;<b>F</b>=Eb &nbsp;<b>G</b>=F &nbsp;<b>H</b>=G &nbsp;<b>J</b>=A &nbsp;<b>K</b>=Bb5 &nbsp;— o toca los círculos
       </p>
       <button class="startBtn" id="startBtn">Cargando sonidos…</button>
       <button class="backBtn" id="backFromPlay">← Volver</button>
@@ -161,12 +161,12 @@ const ctx    = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
 const FPS = 60;
 
-const LANES       = ['A','S','D','F','G','H','J'];
-const NOTE_NAMES  = ['Bb','C','D','Eb','F','G','A'];
-const SAMPLE_NOTE = ['Bb','C','D','Eb','F','G','A']; // nombre del archivo .wav
-const LANE_COLORS = ['#e24b4a','#d4831a','#c9a227','#2a9e74','#2f8fd1','#5f6fdd','#a259c9'];
-const LANE_X      = LANES.map((_, i) => 45 + i * 95 + 30);
-const LANE_W      = 65;
+const LANES       = ["A",'S','D','F','G','H','J'];
+const NOTE_NAMES  = ['Bb','C','D','Eb','F','G','A','Bb5'];
+const SAMPLE_NOTE = ['Bb','C','D','Eb','F','G','A','Bb']; // Bb5 usa mismo sample de Bb pero octava arriba
+const LANE_COLORS = ['#e24b4a','#d4831a','#c9a227','#2a9e74','#2f8fd1','#5f6fdd','#a259c9','#e24b4a'];
+const LANE_X      = LANES.map((_, i) => 28 + i * 84 + 14);
+const LANE_W      = 58;
 const HIT_Y       = H - 90;
 const NOTE_SPEED  = 2.8;
 
@@ -204,21 +204,21 @@ const SONGS = [
       [0,E],[0,E],[0,E],[2,E],[4,E,false,true],
       [-1,E],
       // Bb5 C5 Bb5 A G F| Eb
-      [0,Q,true],[1,Q,true],[0,Q,true],[6,Q],[5,Q],[4,E,false,true],[3,H2],
+      [7,Q],[1,Q,true],[7,Q],[6,Q],[5,Q],[4,E,false,true],[3,H2],
       [-1,H2],
 
       // === Estrofa B ===
       // Bb Bb Eb Eb G G Bb5 G
-      [0,E],[0,E],[3,E],[3,E],[5,E],[5,E],[0,E,true],[5,Q],
+      [0,E],[0,E],[3,E],[3,E],[5,E],[5,E],[7,E],[5,Q],
       [-1,E],
       // Bb5 C5 Bb5 A G Bb5 A F|
-      [0,E,true],[1,E,true],[0,E,true],[6,E],[5,E],[0,E,true],[6,E],[4,E,false,true],
+      [7,E],[1,E,true],[7,E],[6,E],[5,E],[7,E],[6,E],[4,E,false,true],
       [-1,E],
       // Bb Bb D D F| F| A F|
       [0,E],[0,E],[2,E],[2,E],[4,E,false,true],[4,E,false,true],[6,E],[4,E,false,true],
       [-1,E],
       // Bb5 C5 Bb5 A G F| Eb
-      [0,Q,true],[1,Q,true],[0,Q,true],[6,Q],[5,Q],[4,E,false,true],[3,H2],
+      [7,Q],[1,Q,true],[7,Q],[6,Q],[5,Q],[4,E,false,true],[3,H2],
       [-1,H2],
 
       // === Estrofa A (repite) ===
@@ -230,7 +230,7 @@ const SONGS = [
       [0,E],[0,E],[0,E],[2,E],[4,E,false,true],
       [0,E],[0,E],[0,E],[2,E],[4,E,false,true],
       [-1,E],
-      [0,Q,true],[1,Q,true],[0,Q,true],[6,Q],[5,Q],[4,E,false,true],[3,W4],
+      [7,Q],[1,Q,true],[7,Q],[6,Q],[5,Q],[4,E,false,true],[3,W4],
       [-1,H2]
     ]
   },
@@ -304,7 +304,7 @@ let samplesReady   = false;
 // Síntesis de respaldo: Bb4 C5 D5 Eb5 F5 G5 A5
 function synth(laneIdx, miss, rateBase) {
   if (!audioCtx) return;
-  const freqs = [466.16, 523.25, 587.33, 622.25, 698.46, 783.99, 880.00];
+  const freqs = [466.16, 523.25, 587.33, 622.25, 698.46, 783.99, 880.00, 932.33];
   const osc  = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   osc.type = 'triangle';
@@ -342,6 +342,8 @@ function enableStart() {
 
 // octaveUp: reproduce el sample de Bb a doble velocidad → Bb5
 function playNote(laneIdx, miss, octaveUp) {
+  // Carril 7 = Bb5: usa el sample de Bb (índice 0) una octava arriba
+  if (laneIdx === 7) { laneIdx = 0; octaveUp = true; }
   if (!audioCtx) initAudio();
   if (audioCtx.state === 'suspended') audioCtx.resume();
   stopNote(laneIdx);
@@ -362,6 +364,7 @@ function playNote(laneIdx, miss, octaveUp) {
 }
 
 function stopNote(laneIdx) {
+  if (laneIdx === 7) laneIdx = 0;
   const a = activeSrcs[laneIdx];
   if (!a) return;
   const now = audioCtx.currentTime;
@@ -381,7 +384,7 @@ let mode = 'free', currentSong = SONGS[0], running = false;
 let notes=[], particles=[], floats=[];
 let score=0, combo=0, hits=0, misses=0, total=0;
 let spawnTimer=0, nextGapFrames=0, songNoteIdx=0, songDone=false;
-const keyDown = {A:false,S:false,D:false,F:false,G:false,H:false,J:false};
+const keyDown = {A:false,S:false,D:false,F:false,G:false,H:false,J:false,K:false};
 
 /* ══════════════════════════════════════════
    NAVEGACIÓN
@@ -474,7 +477,7 @@ function tryHit(laneIdx) {
     burst(LANE_X[laneIdx], HIT_Y, LANE_COLORS[laneIdx]);
     // En modo libre, Bb5 se activa manteniendo MAYÚSCULAS o doble-toque
     // Simplificación: A siempre suena Bb normal en modo libre
-    playNote(laneIdx, false, false);
+    playNote(laneIdx === 7 ? 0 : laneIdx, false, laneIdx === 7);
     return;
   }
   let best=null, bestDist=9999;
