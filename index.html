@@ -46,6 +46,11 @@
     margin-top: 10px;
   }
   #startBtn:hover { background: #f5cc6b; }
+  #startBtn:disabled {
+    background: #6b5f4a;
+    color: #b9a98a;
+    cursor: not-allowed;
+  }
   #overlay {
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -81,8 +86,8 @@ const W = canvas.width, H = canvas.height;
 
 // Escala de Sib mayor (Bb C D Eb F G A) - usamos 4 grados: Bb, C, D, F
 const LANES = ['D','F','J','K'];
-const NOTE_NAMES = ['Bb','C','D','F'];
-const LANE_FREQS = [466.16, 523.25, 587.33, 698.46]; // Bb4, C5, D5, F5
+const NOTE_NAMES = ['Bb','C','D','Eb'];
+const LANE_FREQS = [466.16, 523.25, 587.33, 622.25]; // Bb4, C5, D5, Eb5 (no se usa para audio, solo referencia)
 const LANE_COLORS = ['#e24b4a', '#ba7517', '#0f6e56', '#378add'];
 const LANE_X = LANES.map((_, i) => 60 + i * 150 + 40);
 const LANE_W = 90;
@@ -106,24 +111,49 @@ let songIndex = 0;
 let running = false;
 const laneKeyState = {D:false,F:false,J:false,K:false};
 
-// Samples reales de acordeón, precargados y decodificados con Web Audio API
-// para reproduccion de baja latencia (nada de <audio>.play() que tiene delay)
-const SAMPLE_FILES = ['sounds/Bb.m4a', 'sounds/C.m4a', 'sounds/D.m4a', 'sounds/F.m4a'];
-let audioCtx = null;
+// ===== Sistema de audio de baja latencia (Web Audio API) =====
+const SAMPLE_FILES = ['sounds/Bb.m4a', 'sounds/C.m4a', 'sounds/D.m4a', 'sounds/Eb.m4a'];
 const audioBuffers = [null, null, null, null];
+let audioCtx = null;
 let samplesReady = false;
+let audioUnlocked = false;
 
-async function initAudio() {
+// 1) Crear el AudioContext y empezar a precargar/decodificar YA, sin esperar
+//    al click de "Empezar" -- se hace en paralelo mientras el usuario lee la pantalla.
+function initAudioContext() {
   if (audioCtx) return;
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  await Promise.all(SAMPLE_FILES.map(async (src, i) => {
-    const res = await fetch(src);
-    const arrBuf = await res.arrayBuffer();
-    audioBuffers[i] = await audioCtx.decodeAudioData(arrBuf);
-  }));
-  samplesReady = true;
 }
 
+async function preloadSamples() {
+  initAudioContext();
+  const loadOne = async (src, i) => {
+    const res = await fetch(src);
+    const arrBuf = await res.arrayBuffer();
+    // decodeAudioData: se decodifica UNA sola vez aqui, nunca en el keydown
+    audioBuffers[i] = await audioCtx.decodeAudioData(arrBuf);
+  };
+  await Promise.all(SAMPLE_FILES.map(loadOne));
+  samplesReady = true;
+  onSamplesReady();
+}
+
+// 6) Desbloquear el AudioContext en la PRIMERA interaccion del usuario
+//    (requisito de autoplay de los navegadores). Se hace con un listener
+//    de una sola vez en pointerdown/keydown, independiente de la carga.
+function unlockAudioOnce() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  initAudioContext();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  window.removeEventListener('pointerdown', unlockAudioOnce);
+  window.removeEventListener('keydown', unlockAudioOnce);
+}
+window.addEventListener('pointerdown', unlockAudioOnce, { once: true });
+window.addEventListener('keydown', unlockAudioOnce, { once: true });
+
+// 5) Reproduccion inmediata: solo crea un BufferSource (barato) a partir
+//    del AudioBuffer ya decodificado en memoria. Nada de fetch/decode aqui.
 function playNote(laneIdx, missSound) {
   if (!audioCtx || !audioBuffers[laneIdx]) return;
   if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -134,7 +164,7 @@ function playNote(laneIdx, missSound) {
   src.playbackRate.value = missSound ? 0.85 : 1;
   src.connect(gain);
   gain.connect(audioCtx.destination);
-  src.start(0);
+  src.start(0); // arranca en el siguiente bloque de audio, minima latencia
 }
 
 function spawnFromSong() {
@@ -311,17 +341,28 @@ document.addEventListener('keyup', (e) => {
   if (LANES.includes(k)) laneKeyState[k] = false;
 });
 
-document.getElementById('startBtn').addEventListener('click', async () => {
-  const btn = document.getElementById('startBtn');
-  btn.textContent = 'Cargando...';
-  btn.disabled = true;
-  await initAudio();
+document.getElementById('startBtn').addEventListener('click', () => {
+  if (!samplesReady) return; // por seguridad, no debería poder pulsarse antes
+  unlockAudioOnce();
   document.getElementById('overlay').style.display = 'none';
   running = true;
   notes = []; particles = []; score = 0; combo = 0; hits = 0; total = 0;
   spawnTimer = 0; songIndex = 0;
   updateHUD();
 });
+
+// 7) Indicador "Cargando sonidos..." -- el boton arranca deshabilitado
+//    y solo se habilita cuando los 4 samples ya estan decodificados.
+function onSamplesReady() {
+  const btn = document.getElementById('startBtn');
+  btn.disabled = false;
+  btn.textContent = 'Empezar';
+}
+
+const startBtn = document.getElementById('startBtn');
+startBtn.disabled = true;
+startBtn.textContent = 'Cargando sonidos...';
+preloadSamples();
 
 loop();
 </script>
