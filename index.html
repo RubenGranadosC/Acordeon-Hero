@@ -64,17 +64,17 @@
 </head>
 <body>
 <h1>ACORDEON HERO</h1>
-<div id="sub">Escala de Sib mayor (Bb, C, D, Eb) — Melodia: <b>La Cucaracha</b> (<span id="songDuration"></span>)<br>Teclas: <b>D F J K</b></div>
+<div id="sub">Escala de Sib mayor (Bb, C, D, Eb, F) — Melodia: <b>La Cucaracha</b> (<span id="songDuration"></span>)<br>Teclas: <b>D F J K L</b></div>
 <div id="hud">
   <div>Puntos: <span id="score">0</span></div>
   <div>Combo: <span id="comboVal">0</span></div>
   <div>Precision: <span id="acc">100%</span></div>
 </div>
 <div id="wrap">
-  <canvas id="gameCanvas" width="600" height="500"></canvas>
+  <canvas id="gameCanvas" width="720" height="500"></canvas>
   <div id="overlay">
     <h2 style="color:#e8b84b;">La Cucaracha</h2>
-    <p style="max-width:400px;">Toca las notas Bb, C, D y F con las teclas D F J K<br>al ritmo de la cancion</p>
+    <p style="max-width:400px;">Toca las notas Bb, C, D, Eb y F con las teclas D F J K L<br>al ritmo de la cancion</p>
     <button id="startBtn">Empezar</button>
   </div>
 </div>
@@ -84,38 +84,46 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
 
-// Escala de Sib mayor (Bb C D Eb F G A) - usamos 4 grados: Bb(Do) C(Re) D(Mi) Eb(Fa)
-const LANES = ['D','F','J','K'];
-const NOTE_NAMES = ['Bb','C','D','Eb'];
-const LANE_FREQS = [466.16, 523.25, 587.33, 622.25]; // Bb4, C5, D5, Eb5 (no se usa para audio, solo referencia)
-const LANE_COLORS = ['#e24b4a', '#ba7517', '#0f6e56', '#378add'];
-const LANE_X = LANES.map((_, i) => 60 + i * 150 + 40);
-const LANE_W = 90;
+// Escala de Sib mayor (Bb C D Eb F G A) - usamos 5 grados para esta melodia: Bb C D Eb F
+const LANES = ['D','F','J','K','L'];
+const NOTE_NAMES = ['Bb','C','D','Eb','F'];
+const LANE_FREQS = [466.16, 523.25, 587.33, 622.25, 698.46]; // Bb4 C5 D5 Eb5 F5 (solo referencia visual)
+const LANE_COLORS = ['#e24b4a', '#ba7517', '#0f6e56', '#378add', '#7f77dd'];
+const LANE_X = LANES.map((_, i) => 60 + i * 130 + 35);
+const LANE_W = 80;
 const HIT_Y = H - 90;
 const NOTE_SPEED = 2.6;
 const FPS = 60;
 const BPM = 104; // tempo tipico de "La Cucaracha"
 const FRAMES_PER_BEAT = FPS * (60 / BPM);
 
-// Duraciones de nota en "beats" (negra = 1, corchea = 0.5, blanca = 2, etc.)
-const EIGHTH = 0.5, QUARTER = 1, HALF = 2;
+// Duraciones de nota en "beats" (negra = 1, corchea = 0.5, blanca = 2, redonda = 4)
+const EIGHTH = 0.5, QUARTER = 1, HALF = 2, WHOLE = 4;
 
-// Melodia de "La Cucaracha" con solfeo movible en Sib mayor (Do=Bb, Re=C, Mi=D, Fa=Eb)
-// Cada entrada es [grado, duracion_en_beats]. grado -1 = silencio.
-// 0=Bb(Do) 1=C(Re) 2=D(Mi) 3=Eb(Fa)
+// Grados usados (indice en NOTE_NAMES): 0=Bb 1=C 2=D 3=Eb 4=F
+// "La Cucaracha" (version simplificada), en Sib mayor, solo notas de la escala:
+//   Bb Bb Bb C D | D C Bb D F | F Eb D C | Bb Bb Bb C D | D C Bb D C | Bb
+// Cada nota es un objeto {lane, beats}: el sistema de notas del juego
+// consume [lane, beats] para saber que carril cae y cuanto dura esa nota
+// antes de que caiga la siguiente.
 const SONG = [
-  // "La cu-ca-ra-cha, la cu-ca-ra-cha" (frase 1, se repite)
-  [2, EIGHTH],[2, EIGHTH],[2, EIGHTH],[2, EIGHTH],   [1, EIGHTH],[2, QUARTER],
-  [3, EIGHTH],[3, EIGHTH],[2, EIGHTH],[1, EIGHTH],   [0, HALF],
-  [2, EIGHTH],[2, EIGHTH],[2, EIGHTH],[2, EIGHTH],   [1, EIGHTH],[2, QUARTER],
-  [3, EIGHTH],[3, EIGHTH],[2, EIGHTH],[1, EIGHTH],   [0, HALF],
-  // "ya no puede caminar" (frase 2)
-  [0, EIGHTH],[0, EIGHTH],[0, EIGHTH],[0, EIGHTH],   [1, EIGHTH],[0, QUARTER],
-  [3, EIGHTH],[2, EIGHTH],[1, EIGHTH],[0, HALF],
-  [-1, QUARTER],
-  // repite frase 2 para cerrar
-  [0, EIGHTH],[0, EIGHTH],[0, EIGHTH],[0, EIGHTH],   [1, EIGHTH],[0, QUARTER],
-  [3, EIGHTH],[2, EIGHTH],[1, EIGHTH],[0, HALF],
+  // Bb Bb Bb C D
+  [0, QUARTER],[0, QUARTER],[0, QUARTER],[1, QUARTER],[2, QUARTER],
+  [-1, EIGHTH], // respiro entre frases
+  // D C Bb D F
+  [2, QUARTER],[1, QUARTER],[0, QUARTER],[2, QUARTER],[4, QUARTER],
+  [-1, EIGHTH],
+  // F Eb D C
+  [4, QUARTER],[3, QUARTER],[2, QUARTER],[1, QUARTER],
+  [-1, EIGHTH],
+  // Bb Bb Bb C D
+  [0, QUARTER],[0, QUARTER],[0, QUARTER],[1, QUARTER],[2, QUARTER],
+  [-1, EIGHTH],
+  // D C Bb D C
+  [2, QUARTER],[1, QUARTER],[0, QUARTER],[2, QUARTER],[1, QUARTER],
+  [-1, EIGHTH],
+  // Bb (nota final, mas larga)
+  [0, WHOLE],
   [-1, HALF]
 ];
 
@@ -129,15 +137,15 @@ let spawnTimer = 0;
 let nextSpawnGap = 0;
 let songIndex = 0;
 let running = false;
-const laneKeyState = {D:false,F:false,J:false,K:false};
+const laneKeyState = {D:false,F:false,J:false,K:false,L:false};
 
 // ===== Sistema de audio de baja latencia (Web Audio API) =====
 // Los samples ya vienen en WAV, sin silencio inicial (recortados de antemano).
 // El sample de cada carril se determina por el NOMBRE de la nota en NOTE_NAMES
 // (ej. NOTE_NAMES[0] = 'Bb' -> carga sounds/Bb.wav).
 const SAMPLE_FILES = NOTE_NAMES.map(note => `sounds/${note}.wav`);
-const audioBuffers = [null, null, null, null];
-const activeSources = [null, null, null, null]; // fuente activa por carril, para loop/stop
+const audioBuffers = NOTE_NAMES.map(() => null);
+const activeSources = NOTE_NAMES.map(() => null); // fuente activa por carril, para loop/stop
 let audioCtx = null;
 let samplesReady = false;
 let audioUnlocked = false;
@@ -272,7 +280,7 @@ function update() {
 function draw() {
   ctx.clearRect(0, 0, W, H);
 
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < LANES.length; i++) {
     const x = LANE_X[i] - LANE_W/2;
     ctx.fillStyle = laneKeyState[LANES[i]] ? LANE_COLORS[i] + '33' : 'rgba(255,255,255,0.03)';
     ctx.fillRect(x, 0, LANE_W, H);
@@ -292,7 +300,7 @@ function draw() {
   ctx.lineTo(W - 20, HIT_Y);
   ctx.stroke();
 
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < LANES.length; i++) {
     const x = LANE_X[i];
     ctx.beginPath();
     ctx.arc(x, HIT_Y, 28, 0, Math.PI * 2);
