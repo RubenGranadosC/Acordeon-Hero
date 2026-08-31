@@ -777,18 +777,21 @@ document.addEventListener('keyup', e => {
 });
 
 /* ══════════════════════════════════════════
-   INPUT — TOUCH (movil / tablet)
-   Cada dedo se rastrea por su touch.identifier, para poder tocar
+   INPUT — TOUCH / MOUSE (Pointer Events)
+   Se usa Pointer Events en vez de solo Touch Events porque cubre
+   mouse, touch y lapiz de forma unificada -- asi funciona igual si
+   se prueba con el dedo en celular o con el mouse en escritorio/laptop
+   tactil. Cada puntero se rastrea por su pointerId, para poder tocar
    varios carriles a la vez y soltar cada uno independientemente.
 ══════════════════════════════════════════ */
-const touchLaneMap = new Map(); // identifier -> laneIdx
+const pointerLaneMap = new Map(); // pointerId -> laneIdx
 
-function canvasXFromTouch(touch) {
+function canvasXFromClient(clientX) {
   const rect = canvas.getBoundingClientRect();
   // el canvas puede estar escalado por CSS (max-width:100%), asi que
-  // convertimos la posicion del toque a coordenadas reales del canvas
+  // convertimos la posicion del puntero a coordenadas reales del canvas
   const scaleX = canvas.width / rect.width;
-  return (touch.clientX - rect.left) * scaleX;
+  return (clientX - rect.left) * scaleX;
 }
 
 function laneFromX(x) {
@@ -800,46 +803,38 @@ function laneFromX(x) {
   return best;
 }
 
-canvas.addEventListener('touchstart', e => {
+canvas.addEventListener('pointerdown', e => {
   e.preventDefault();
   initAudio();
   if (audioCtx.state === 'suspended') audioCtx.resume();
-  for (const touch of e.changedTouches) {
-    const x = canvasXFromTouch(touch);
-    const lane = laneFromX(x);
-    touchLaneMap.set(touch.identifier, lane);
-    keyDown[LANES[lane]] = true;
-    tryHit(lane);
-  }
-}, { passive: false });
+  canvas.setPointerCapture(e.pointerId); // asegura recibir el pointerup aunque el dedo/mouse se mueva fuera del canvas
+  const x = canvasXFromClient(e.clientX);
+  const lane = laneFromX(x);
+  pointerLaneMap.set(e.pointerId, lane);
+  keyDown[LANES[lane]] = true;
+  tryHit(lane);
+});
 
-canvas.addEventListener('touchend', e => {
-  e.preventDefault();
-  for (const touch of e.changedTouches) {
-    const lane = touchLaneMap.get(touch.identifier);
-    if (lane === undefined) continue;
-    touchLaneMap.delete(touch.identifier);
-    // solo soltar la tecla si ningun otro dedo sigue tocando ese mismo carril
-    const stillPressed = [...touchLaneMap.values()].includes(lane);
-    if (!stillPressed) {
-      keyDown[LANES[lane]] = false;
-      stopNote(lane);
-    }
+function releasePointer(e) {
+  const lane = pointerLaneMap.get(e.pointerId);
+  if (lane === undefined) return;
+  pointerLaneMap.delete(e.pointerId);
+  // solo soltar la tecla si ningun otro puntero sigue tocando ese mismo carril
+  const stillPressed = [...pointerLaneMap.values()].includes(lane);
+  if (!stillPressed) {
+    keyDown[LANES[lane]] = false;
+    stopNote(lane);
   }
-}, { passive: false });
+}
 
-canvas.addEventListener('touchcancel', e => {
-  for (const touch of e.changedTouches) {
-    const lane = touchLaneMap.get(touch.identifier);
-    if (lane === undefined) continue;
-    touchLaneMap.delete(touch.identifier);
-    const stillPressed = [...touchLaneMap.values()].includes(lane);
-    if (!stillPressed) {
-      keyDown[LANES[lane]] = false;
-      stopNote(lane);
-    }
-  }
-}, { passive: false });
+canvas.addEventListener('pointerup', releasePointer);
+canvas.addEventListener('pointercancel', releasePointer);
+canvas.addEventListener('pointerleave', e => {
+  // si el puntero fue "capturado" con setPointerCapture, pointerleave no
+  // deberia disparar la liberacion (seguimos recibiendo pointerup normal),
+  // pero por seguridad en navegadores que no soportan capture bien:
+  if (e.pointerType === 'mouse') releasePointer(e);
+});
 
 /* ══════════════════════════════════════════
    LOOP PRINCIPAL
