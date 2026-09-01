@@ -192,7 +192,7 @@
 
 <h1>ACORDEÓN HERO</h1>
 <div id="sub">
-  Do(Sib) · Re · Mi · Fa · Sol · La · Si &nbsp;|&nbsp; Teclas: <b>A S D F G H J</b> &nbsp;o&nbsp; toca la pantalla
+  Sib₄ · Do · Re · Mib · Fa · Sol · La · Sib₅ &nbsp;|&nbsp; Teclas: <b>A S D F G H J K</b> &nbsp;o&nbsp; toca la pantalla
   <span id="modeTag">LIBRE</span>
 </div>
 <div id="hud">
@@ -229,7 +229,7 @@
       <h2 id="playTitle" style="color:#e8b84b; letter-spacing:2px;"></h2>
       <p id="playMeta" class="tip"></p>
       <p class="tip" style="margin-top:6px;">
-        Teclas: <b>A</b>=Do(Sib) &nbsp;<b>S</b>=Re &nbsp;<b>D</b>=Mi &nbsp;<b>F</b>=Fa &nbsp;<b>G</b>=Sol &nbsp;<b>H</b>=La &nbsp;<b>J</b>=Si &nbsp;— o toca los círculos en pantalla
+        Teclas: <b>A</b>=Sib₄ &nbsp;<b>S</b>=Do &nbsp;<b>D</b>=Re &nbsp;<b>F</b>=Mib &nbsp;<b>G</b>=Fa &nbsp;<b>H</b>=Sol &nbsp;<b>J</b>=La &nbsp;<b>K</b>=Sib₅ &nbsp;— o toca los círculos en pantalla
       </p>
       <div id="difficultyRow" style="display:flex; gap:8px; margin-top:8px;">
         <button class="diffBtn" data-diff="facil">Fácil</button>
@@ -275,12 +275,16 @@ const FPS = 60;
 // 7 notas de la escala de Sib mayor, con Do = Sib (tal como esta planteado
 // el juego desde el inicio). Bajo este mapeo movible, Mi = D y Si = A ya
 // existen como samples reales -- no hace falta sustituir nada.
-const LANES       = ['A','S','D','F','G','H','J'];
-const NOTE_NAMES  = ['Do','Re','Mi','Fa','Sol','La','Si'];
-const SAMPLE_NOTE = ['Bb','C','D','Eb','F','G','A']; // nombre real del archivo .wav por carril
-const LANE_COLORS = ['#e24b4a','#d4831a','#c9a227','#2a9e74','#2f8fd1','#5f6fdd','#a259c9'];
-const LANE_X      = LANES.map((_, i) => 45 + i * 95 + 30);
-const LANE_W      = 65;
+// 8 carriles con nombre fijo de nota (Do=C fijo, como en tus archivos originales
+// Do/Re/Mib/Fa/Sol/Sib). Sib4 y Sib5 son DOS samples reales distintos (dos
+// octavas grabadas de la misma nota Bb) -- al estar en carriles/teclas
+// diferentes, pueden sonar al mismo tiempo sin ningun problema.
+const LANES       = ['A','S','D','F','G','H','J','K'];
+const NOTE_NAMES  = ['Sib₄','Do','Re','Mib','Fa','Sol','La','Sib₅'];
+const SAMPLE_NOTE = ['Bb','C','D','Eb','F','G','A','Bb5']; // nombre real del archivo .wav por carril (sounds/Bb.wav y sounds/Bb5.wav)
+const LANE_COLORS = ['#8b5fbf','#e24b4a','#d4831a','#c9a227','#2a9e74','#2f8fd1','#5f6fdd','#a259c9'];
+const LANE_X      = LANES.map((_, i) => 40 + i * 85 + 28);
+const LANE_W      = 58;
 const HIT_Y       = H - 90;
 const NOTE_SPEED  = 2.8;
 
@@ -311,67 +315,69 @@ const Q = 1, E = 0.5, H2 = 2, W4 = 4;
    CANCIONES
    Cada nota: [laneIndex, beats, octaveUp?, staccato?]
    laneIndex -1 = silencio
-   octaveUp = reproduce el sample una octava arriba (para las notas Do* y Re* de la hoja)
+   octaveUp = reproduce el sample una octava arriba (para las notas Do* y Re* de la hoja,
+   que no tienen su propio sample grabado)
    staccato = nota corta/picada (se suelta sola rapido, para las marcadas "|")
-   Tonos del juego: Do=Sib(Bb) Re=C Mi=D Fa=Eb Sol=F La=G Si=A
-   (con Do=Sib, la palabra "sib" de la partitura es literalmente el mismo Do,
-   por eso cae en el mismo carril -- no hace falta sustituir Mi ni Si por nada,
-   ya existen como samples reales dentro de la escala de Sib mayor)
+   Tonos del juego (Do=C fijo, como tus archivos originales):
+   0=Sib4(Bb grave) 1=Do(C) 2=Re(D) 3=Mib(Eb) 4=Fa(F) 5=Sol(G) 6=La(A) 7=Sib5(Bb agudo)
+   La partitura usa "mi" y "si" naturales que no existen como sample -> se
+   sustituyen por Mib y Sib (la nota mas cercana que si tenemos grabada).
 ══════════════════════════════════════════ */
 const SONGS = [
   {
     id: 'cucaracha',
     title: 'La Cucaracha',
     bpm: 108,
-    // Transcripcion literal de la partitura: empieza en Sib (Do) y cierra
-    // con un Bb5 sostenido (Do una octava arriba), como se pidio.
+    // Transcripcion literal de la partitura: empieza en Do y cierra con un
+    // Sib5 sostenido -- ahora usando el sample REAL de Sib5, ya no una
+    // octava sintetizada.
     // Estructura: Estrofa A, Estrofa B, Estrofa A + coda final.
     notes: [
       // ===== Estrofa A =====
       // do do do fa la
-      [0,E],[0,E],[0,E],[3,E],[5,Q],
+      [1,E],[1,E],[1,E],[4,E],[6,Q],
       // do do do fa la
-      [0,E],[0,E],[0,E],[3,E],[5,Q],
+      [1,E],[1,E],[1,E],[4,E],[6,Q],
       [-1,E],
-      // fa fa mi mi re re do
-      [3,E],[3,E],[2,E],[2,E],[1,E],[1,E],[0,Q],
+      // fa fa mi mi re re do   (mi -> mib)
+      [4,E],[4,E],[3,E],[3,E],[2,E],[2,E],[1,Q],
       [-1,E],
-      // do do do mi so|   ("|" = nota picada/corta)
-      [0,E],[0,E],[0,E],[2,E],[4,E],
+      // do do do mi so|   (mi -> mib, "|" = nota picada/corta)
+      [1,E],[1,E],[1,E],[3,E],[5,E],
       // do do do mi so|
-      [0,E],[0,E],[0,E],[2,E],[4,E],
+      [1,E],[1,E],[1,E],[3,E],[5,E],
       [-1,E],
-      // do* re* do* sib la so| fa   (* = octava arriba; "sib" = mismo Do, registro normal)
-      [0,Q,true],[1,Q,true],[0,Q,true],[0,Q],[5,Q],[4,E],[3,H2],
+      // do* re* do* sib la so| fa   (* = octava arriba; "sib" = Sib4, registro grave)
+      [1,Q,true],[2,Q,true],[1,Q,true],[0,Q],[6,Q],[5,E],[4,H2],
       [-1,H2],
 
       // ===== Estrofa B =====
       // do do fa fa la la do* la
-      [0,E],[0,E],[3,E],[3,E],[5,E],[5,E],[0,E,true],[5,Q],
+      [1,E],[1,E],[4,E],[4,E],[6,E],[6,E],[1,E,true],[6,Q],
       [-1,E],
-      // do* re* do* sib la do* si so|
-      [0,E,true],[1,E,true],[0,E,true],[0,E],[5,E],[0,E,true],[6,E],[4,E],
+      // do* re* do* sib la do* si so|   (si -> sib, mismo Sib4)
+      [1,E,true],[2,E,true],[1,E,true],[0,E],[6,E],[1,E,true],[0,E],[5,E],
       [-1,E],
       // do do mi mi so| so| si so|
-      [0,E],[0,E],[2,E],[2,E],[4,E],[4,E],[6,E],[4,E],
+      [1,E],[1,E],[3,E],[3,E],[5,E],[5,E],[0,E],[5,E],
       [-1,E],
       // do* re* do* sib la so| fa
-      [0,Q,true],[1,Q,true],[0,Q,true],[0,Q],[5,Q],[4,E],[3,H2],
+      [1,Q,true],[2,Q,true],[1,Q,true],[0,Q],[6,Q],[5,E],[4,H2],
       [-1,H2],
 
       // ===== Estrofa A (repite) =====
-      [0,E],[0,E],[0,E],[3,E],[5,Q],
-      [0,E],[0,E],[0,E],[3,E],[5,Q],
+      [1,E],[1,E],[1,E],[4,E],[6,Q],
+      [1,E],[1,E],[1,E],[4,E],[6,Q],
       [-1,E],
-      [3,E],[3,E],[2,E],[2,E],[1,E],[1,E],[0,Q],
+      [4,E],[4,E],[3,E],[3,E],[2,E],[2,E],[1,Q],
       [-1,E],
-      [0,E],[0,E],[0,E],[2,E],[4,E],
-      [0,E],[0,E],[0,E],[2,E],[4,E],
+      [1,E],[1,E],[1,E],[3,E],[5,E],
+      [1,E],[1,E],[1,E],[3,E],[5,E],
       [-1,E],
-      [0,Q,true],[1,Q,true],[0,Q,true],[0,Q],[5,Q],[4,E],[3,Q],
+      [1,Q,true],[2,Q,true],[1,Q,true],[0,Q],[6,Q],[5,E],[4,Q],
       [-1,E],
-      // Coda final: cierre sostenido en Bb5 (Do una octava arriba), como se pidio
-      [0,W4,true],
+      // Coda final: cierre sostenido en Sib5 (sample real, ya no octava sintetizada)
+      [7,W4],
       [-1,H2]
     ]
   },
@@ -380,14 +386,14 @@ const SONGS = [
     title: 'Los Pollitos',
     bpm: 96,
     notes: [
-      [1,Q],[1,Q],[1,Q],[1,E],[2,E],[3,Q],  [-1,E],
+      [2,Q],[2,Q],[2,Q],[2,E],[3,E],[4,Q],  [-1,E],
+      [4,E],[3,E],[4,E],[3,E],[2,H2],        [-1,E],
+      [4,Q],[4,Q],[4,Q],[3,E],[4,E],[3,Q],  [-1,E],
       [3,E],[2,E],[3,E],[2,E],[1,H2],        [-1,E],
-      [3,Q],[3,Q],[3,Q],[2,E],[3,E],[2,Q],  [-1,E],
-      [2,E],[1,E],[2,E],[1,E],[0,H2],        [-1,E],
-      [0,E],[1,E],[2,E],[1,Q],[0,Q],         [-1,E],
-      [2,E],[2,E],[2,E],[2,E],[2,E],[3,Q],  [-1,E],
-      [0,E],[1,E],[2,E],[1,Q],[0,Q],         [-1,E],
-      [3,E],[3,E],[3,E],[2,E],[1,H2],        [-1,H2]
+      [1,E],[2,E],[3,E],[2,Q],[1,Q],         [-1,E],
+      [3,E],[3,E],[3,E],[3,E],[3,E],[4,Q],  [-1,E],
+      [1,E],[2,E],[3,E],[2,Q],[1,Q],         [-1,E],
+      [4,E],[4,E],[4,E],[3,E],[2,H2],        [-1,H2]
     ]
   },
   {
@@ -395,14 +401,14 @@ const SONGS = [
     title: 'La Bamba',
     bpm: 126,
     notes: [
-      [6,E],[0,E],[1,Q],[1,Q],  [-1,E],
-      [0,E],[1,E],[0,Q],[6,Q],  [-1,E],
-      [6,E],[0,E],[1,Q],[1,Q],  [-1,E],
-      [0,E],[1,E],[0,Q],[6,Q],  [-1,Q],
-      [6,E],[6,E],[6,E],[6,E],[0,Q],[1,Q], [-1,E],
-      [6,E],[6,E],[6,E],[6,E],[0,Q],[1,E],[2,E], [-1,E],
-      [1,E],[0,E],[1,E],[0,E],[1,Q], [-1,E],
-      [2,E],[3,E],[2,E],[1,E],[0,H2], [-1,H2]
+      [7,E],[1,E],[2,Q],[2,Q],  [-1,E],
+      [1,E],[2,E],[1,Q],[7,Q],  [-1,E],
+      [7,E],[1,E],[2,Q],[2,Q],  [-1,E],
+      [1,E],[2,E],[1,Q],[7,Q],  [-1,Q],
+      [7,E],[7,E],[7,E],[7,E],[1,Q],[2,Q], [-1,E],
+      [7,E],[7,E],[7,E],[7,E],[1,Q],[2,E],[3,E], [-1,E],
+      [2,E],[1,E],[2,E],[1,E],[2,Q], [-1,E],
+      [3,E],[4,E],[3,E],[2,E],[1,H2], [-1,H2]
     ]
   },
   {
@@ -410,14 +416,14 @@ const SONGS = [
     title: 'Cielito Lindo',
     bpm: 100,
     notes: [
-      [3,Q],[3,Q],[2,Q],[1,Q],          [-1,E],
-      [0,Q],[0,Q],[1,Q],[6,H2],          [-1,E],
-      [3,Q],[3,Q],[2,Q],[1,Q],          [-1,E],
-      [0,Q],[6,Q],[1,Q],[6,H2],          [-1,E],
-      [1,Q],[1,Q],[2,Q],[3,Q],          [-1,E],
-      [3,Q],[2,Q],[1,Q],[0,H2],          [-1,E],
-      [1,Q],[1,Q],[0,Q],[6,Q],          [-1,E],
-      [0,Q],[1,Q],[0,Q],[6,W4],          [-1,H2]
+      [4,Q],[4,Q],[3,Q],[2,Q],          [-1,E],
+      [1,Q],[1,Q],[2,Q],[7,H2],          [-1,E],
+      [4,Q],[4,Q],[3,Q],[2,Q],          [-1,E],
+      [1,Q],[7,Q],[2,Q],[7,H2],          [-1,E],
+      [2,Q],[2,Q],[3,Q],[4,Q],          [-1,E],
+      [4,Q],[3,Q],[2,Q],[1,H2],          [-1,E],
+      [2,Q],[2,Q],[1,Q],[7,Q],          [-1,E],
+      [1,Q],[2,Q],[1,Q],[7,W4],          [-1,H2]
     ]
   },
   {
@@ -428,17 +434,17 @@ const SONGS = [
     // y una nota final sostenida (el clasico ritmo de "Twinkle Twinkle").
     notes: [
       // Sol Sol Re Re Mi Mi Re   (Es-tre-lli-ta ¿dón-de es-tás?)
-      [4,Q],[4,Q],[1,Q],[1,Q],[2,Q],[2,Q],[1,H2], [-1,Q],
+      [5,Q],[5,Q],[2,Q],[2,Q],[3,Q],[3,Q],[2,H2], [-1,Q],
       // Do Do Si Si La La Sol   (Me pre-gun-to quién se-rás)
-      [0,Q],[0,Q],[6,Q],[6,Q],[5,Q],[5,Q],[4,H2], [-1,Q],
+      [1,Q],[1,Q],[7,Q],[7,Q],[6,Q],[6,Q],[5,H2], [-1,Q],
       // Re Re Do Do Si Si La   (En el cie-lo o en el mar)
-      [1,Q],[1,Q],[0,Q],[0,Q],[6,Q],[6,Q],[5,H2], [-1,Q],
+      [2,Q],[2,Q],[1,Q],[1,Q],[7,Q],[7,Q],[6,H2], [-1,Q],
       // Re Re Do Do Si Si La   (Un dia-man-te de ver-dad)
-      [1,Q],[1,Q],[0,Q],[0,Q],[6,Q],[6,Q],[5,H2], [-1,Q],
+      [2,Q],[2,Q],[1,Q],[1,Q],[7,Q],[7,Q],[6,H2], [-1,Q],
       // Sol Sol Re Re Mi Mi Re   (Es-tre-lli-ta ¿dón-de es-tás?)
-      [4,Q],[4,Q],[1,Q],[1,Q],[2,Q],[2,Q],[1,H2], [-1,Q],
+      [5,Q],[5,Q],[2,Q],[2,Q],[3,Q],[3,Q],[2,H2], [-1,Q],
       // Do Do Si Si La La Sol   (Me pre-gun-to quién se-rás) -- cierre final
-      [0,Q],[0,Q],[6,Q],[6,Q],[5,Q],[5,Q],[4,W4],
+      [1,Q],[1,Q],[7,Q],[7,Q],[6,Q],[6,Q],[5,W4],
       [-1,H2]
     ]
   }
@@ -456,7 +462,8 @@ let samplesReady   = false;
 // Do Re Mib Fa Sol La Sib (C D Eb F G A Bb, empezando en Do central)
 function synth(laneIdx, miss, rateBase) {
   if (!audioCtx) return;
-  const freqs = [261.63, 293.66, 311.13, 349.23, 392.00, 440.00, 466.16];
+  // Sib4 Do Re Mib Fa Sol La Sib5 (Bb3 C4 D4 Eb4 F4 G4 A4 Bb4)
+  const freqs = [233.08, 261.63, 293.66, 311.13, 349.23, 392.00, 440.00, 466.16];
   const mult = (rateBase || 1) * (miss ? 0.5 : 1);
   const osc  = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
@@ -563,7 +570,7 @@ let nextGapFrames = 0;
 let songNoteIdx   = 0;
 let songDone      = false;
 
-const keyDown = { A: false, S: false, D: false, F: false, G: false, H: false, J: false };
+const keyDown = { A: false, S: false, D: false, F: false, G: false, H: false, J: false, K: false };
 
 /* ══════════════════════════════════════════
    NAVEGACIÓN DE PANTALLAS
