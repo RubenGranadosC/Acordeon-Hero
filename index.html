@@ -382,69 +382,44 @@ const SONGS = [
     ]
   },
   {
-    id: 'marranitos',
-    title: 'Los Pollitos',
-    bpm: 96,
-    notes: [
-      [2,Q],[2,Q],[2,Q],[2,E],[3,E],[4,Q],  [-1,E],
-      [4,E],[3,E],[4,E],[3,E],[2,H2],        [-1,E],
-      [4,Q],[4,Q],[4,Q],[3,E],[4,E],[3,Q],  [-1,E],
-      [3,E],[2,E],[3,E],[2,E],[1,H2],        [-1,E],
-      [1,E],[2,E],[3,E],[2,Q],[1,Q],         [-1,E],
-      [3,E],[3,E],[3,E],[3,E],[3,E],[4,Q],  [-1,E],
-      [1,E],[2,E],[3,E],[2,Q],[1,Q],         [-1,E],
-      [4,E],[4,E],[4,E],[3,E],[2,H2],        [-1,H2]
-    ]
-  },
-  {
-    id: 'bamba',
-    title: 'La Bamba',
-    bpm: 126,
-    notes: [
-      [7,E],[1,E],[2,Q],[2,Q],  [-1,E],
-      [1,E],[2,E],[1,Q],[7,Q],  [-1,E],
-      [7,E],[1,E],[2,Q],[2,Q],  [-1,E],
-      [1,E],[2,E],[1,Q],[7,Q],  [-1,Q],
-      [7,E],[7,E],[7,E],[7,E],[1,Q],[2,Q], [-1,E],
-      [7,E],[7,E],[7,E],[7,E],[1,Q],[2,E],[3,E], [-1,E],
-      [2,E],[1,E],[2,E],[1,E],[2,Q], [-1,E],
-      [3,E],[4,E],[3,E],[2,E],[1,H2], [-1,H2]
-    ]
-  },
-  {
-    id: 'cielito',
-    title: 'Cielito Lindo',
+    id: 'fuertenosoy',
+    title: 'Fuerte No Soy (Puente)',
     bpm: 100,
+    // Puente tal cual lo diste, en corcheas parejas con una pequena pausa
+    // entre cada grupo (marcado por las comas). "sib" sin marcar octava se
+    // toma como el Sib grave (Sib4, carril 0). Se toca 2 veces seguidas.
     notes: [
-      [4,Q],[4,Q],[3,Q],[2,Q],          [-1,E],
-      [1,Q],[1,Q],[2,Q],[7,H2],          [-1,E],
-      [4,Q],[4,Q],[3,Q],[2,Q],          [-1,E],
-      [1,Q],[7,Q],[2,Q],[7,H2],          [-1,E],
-      [2,Q],[2,Q],[3,Q],[4,Q],          [-1,E],
-      [4,Q],[3,Q],[2,Q],[1,H2],          [-1,E],
-      [2,Q],[2,Q],[1,Q],[7,Q],          [-1,E],
-      [1,Q],[2,Q],[1,Q],[7,W4],          [-1,H2]
-    ]
-  },
-  {
-    id: 'estrellita',
-    title: 'Estrellita Dónde Estás',
-    bpm: 100,
-    // Transcripcion literal de la partitura: cada linea son 6 corcheas/negras
-    // y una nota final sostenida (el clasico ritmo de "Twinkle Twinkle").
-    notes: [
-      // Sol Sol Re Re Mi Mi Re   (Es-tre-lli-ta ¿dón-de es-tás?)
-      [5,Q],[5,Q],[2,Q],[2,Q],[3,Q],[3,Q],[2,H2], [-1,Q],
-      // Do Do Si Si La La Sol   (Me pre-gun-to quién se-rás)
-      [1,Q],[1,Q],[7,Q],[7,Q],[6,Q],[6,Q],[5,H2], [-1,Q],
-      // Re Re Do Do Si Si La   (En el cie-lo o en el mar)
-      [2,Q],[2,Q],[1,Q],[1,Q],[7,Q],[7,Q],[6,H2], [-1,Q],
-      // Re Re Do Do Si Si La   (Un dia-man-te de ver-dad)
-      [2,Q],[2,Q],[1,Q],[1,Q],[7,Q],[7,Q],[6,H2], [-1,Q],
-      // Sol Sol Re Re Mi Mi Re   (Es-tre-lli-ta ¿dón-de es-tás?)
-      [5,Q],[5,Q],[2,Q],[2,Q],[3,Q],[3,Q],[2,H2], [-1,Q],
-      // Do Do Si Si La La Sol   (Me pre-gun-to quién se-rás) -- cierre final
-      [1,Q],[1,Q],[7,Q],[7,Q],[6,Q],[6,Q],[5,W4],
+      // do,
+      [1,E],
+      [-1,E],
+      // do re mib fa mib re mib sib,
+      [1,E],[2,E],[3,E],[4,E],[3,E],[2,E],[3,E],[0,E],
+      [-1,E],
+      // sib do re mib re do re fa,
+      [0,E],[1,E],[2,E],[3,E],[2,E],[1,E],[2,E],[4,E],
+      [-1,E],
+      // fa sol la sol fa mib fa,
+      [4,E],[5,E],[6,E],[5,E],[4,E],[3,E],[4,E],
+      [-1,E],
+      // sib sib sib do re,
+      [0,E],[0,E],[0,E],[1,E],[2,E],
+      [-1,E],
+      // re re re mib fa
+      [2,E],[2,E],[2,E],[3,E],[4,E],
+      [-1,H2],
+
+      // ===== se repite =====
+      [1,E],
+      [-1,E],
+      [1,E],[2,E],[3,E],[4,E],[3,E],[2,E],[3,E],[0,E],
+      [-1,E],
+      [0,E],[1,E],[2,E],[3,E],[2,E],[1,E],[2,E],[4,E],
+      [-1,E],
+      [4,E],[5,E],[6,E],[5,E],[4,E],[3,E],[4,E],
+      [-1,E],
+      [0,E],[0,E],[0,E],[1,E],[2,E],
+      [-1,E],
+      [2,E],[2,E],[2,E],[3,E],[4,E],
       [-1,H2]
     ]
   }
