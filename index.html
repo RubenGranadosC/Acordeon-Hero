@@ -16,7 +16,7 @@
     min-height: 100vh;
     overflow: hidden;
     user-select: none;
-    touch-action: none;
+    touch-action: none; /* evita scroll/zoom al tocar el canvas en movil */
   }
   h1 {
     margin: 14px 0 2px;
@@ -32,7 +32,12 @@
     text-align: center;
     letter-spacing: 1px;
   }
-  #hud { display: flex; gap: 32px; margin: 6px 0; font-size: 16px; }
+  #hud {
+    display: flex;
+    gap: 32px;
+    margin: 6px 0;
+    font-size: 16px;
+  }
   #hud span { color: #e8b84b; font-weight: bold; }
   #wrap { position: relative; max-width: 95vw; }
   #gameCanvas {
@@ -45,6 +50,8 @@
     height: auto;
     touch-action: none;
   }
+
+  /* ───── overlay ───── */
   #overlay {
     position: absolute;
     inset: 0;
@@ -58,51 +65,118 @@
   }
   .screen { display: none; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
   .screen.active { display: flex; }
+
   .menuBtn {
-    background: transparent; color: #f2e9dc;
+    background: transparent;
+    color: #f2e9dc;
     border: 2px solid #e8b84b;
-    padding: 14px 30px; font-size: 17px; font-weight: bold;
-    border-radius: 8px; cursor: pointer; min-width: 240px;
-    letter-spacing: 1px; transition: background 0.15s;
+    padding: 14px 30px;
+    font-size: 17px;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    min-width: 240px;
+    letter-spacing: 1px;
+    transition: background 0.15s, color 0.15s;
   }
   .menuBtn:hover { background: rgba(232,184,75,0.18); }
+
   .songBtn {
-    background: transparent; color: #f2e9dc;
+    background: transparent;
+    color: #f2e9dc;
     border: 1px solid #5a4f3f;
-    padding: 12px 22px; font-size: 15px;
-    border-radius: 8px; cursor: pointer; min-width: 260px;
-    transition: background 0.15s, border-color 0.15s; text-align: left;
+    padding: 12px 22px;
+    font-size: 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    min-width: 260px;
+    transition: background 0.15s, border-color 0.15s;
+    text-align: left;
   }
   .songBtn:hover { background: rgba(232,184,75,0.1); border-color: #e8b84b; }
   .songBtn .songMeta { color: #8a7d68; font-size: 12px; display: block; margin-top: 2px; }
+
+  .diffBtn {
+    background: transparent;
+    color: #b9a98a;
+    border: 1px solid #5a4f3f;
+    padding: 8px 16px;
+    font-size: 13px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .diffBtn:hover { border-color: #e8b84b; color: #f2e9dc; }
+  .diffBtn.active {
+    background: #e8b84b;
+    color: #12100e;
+    border-color: #e8b84b;
+    font-weight: bold;
+  }
+
+  .bpmBtn {
+    background: transparent;
+    color: #f2e9dc;
+    border: 1px solid #5a4f3f;
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+    font-weight: bold;
+    border-radius: 50%;
+    cursor: pointer;
+    line-height: 1;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .bpmBtn:hover { background: rgba(232,184,75,0.15); border-color: #e8b84b; }
+
   .backBtn {
-    background: transparent; color: #8a7d68; border: none;
-    font-size: 13px; cursor: pointer; text-decoration: underline; margin-top: 4px;
+    background: transparent;
+    color: #8a7d68;
+    border: none;
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: underline;
+    margin-top: 4px;
   }
   .backBtn:hover { color: #b9a98a; }
+
   .startBtn {
-    background: #e8b84b; color: #12100e; border: none;
-    padding: 14px 34px; font-size: 18px; font-weight: bold;
-    border-radius: 8px; cursor: pointer; letter-spacing: 1px;
-    margin-top: 6px; transition: background 0.15s;
+    background: #e8b84b;
+    color: #12100e;
+    border: none;
+    padding: 14px 34px;
+    font-size: 18px;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    margin-top: 6px;
+    transition: background 0.15s;
   }
   .startBtn:hover { background: #f5cc6b; }
   .startBtn:disabled { background: #4a4032; color: #8a7d68; cursor: not-allowed; }
+
   #modeTag {
     display: inline-block;
-    background: rgba(127,119,221,0.2); border: 1px solid #7f77dd;
-    color: #9f98ee; font-size: 12px; padding: 2px 10px;
-    border-radius: 20px; letter-spacing: 1px; margin-left: 8px;
+    background: rgba(127,119,221,0.2);
+    border: 1px solid #7f77dd;
+    color: #9f98ee;
+    font-size: 12px;
+    padding: 2px 10px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+    margin-left: 8px;
   }
   #modeTag.song { background: rgba(232,184,75,0.15); border-color: #e8b84b; color: #e8b84b; }
-  .tip { color: #6a5f4e; font-size: 12px; max-width: 360px; line-height: 1.6; }
+
+  .tip { color: #6a5f4e; font-size: 12px; max-width: 340px; line-height: 1.6; }
 </style>
 </head>
 <body>
 
 <h1>ACORDEÓN HERO</h1>
 <div id="sub">
-  Bb · C · D · Eb · F · G · A · Bb5 &nbsp;|&nbsp; Teclas: <b>A S D F G H J K</b> &nbsp;o&nbsp; toca la pantalla
+  Do(Sib) · Re · Mi · Fa · Sol · La · Si &nbsp;|&nbsp; Teclas: <b>A S D F G H J</b> &nbsp;o&nbsp; toca la pantalla
   <span id="modeTag">LIBRE</span>
 </div>
 <div id="hud">
@@ -113,31 +187,48 @@
 
 <div id="wrap">
   <canvas id="gameCanvas" width="720" height="500"></canvas>
+
   <div id="overlay">
 
+    <!-- MENÚ PRINCIPAL -->
     <div id="screenMenu" class="screen active">
       <h2 style="color:#e8b84b; letter-spacing:3px; margin-bottom:6px;">ACORDEÓN HERO</h2>
-      <p class="tip">Toca las notas cuando lleguen a la línea amarilla</p><br>
+      <p class="tip">Toca las notas cuando lleguen a la línea amarilla</p>
+      <br>
       <button class="menuBtn" id="btnFree">🎹 Modo libre</button>
       <button class="menuBtn" id="btnSongs">🎵 Modo canción</button>
     </div>
 
+    <!-- LISTA DE CANCIONES -->
     <div id="screenSongs" class="screen">
       <h2 style="color:#e8b84b; letter-spacing:2px; margin-bottom:4px;">Elige una canción</h2>
-      <div id="songList" style="display:flex;flex-direction:column;align-items:center;gap:6px;max-height:320px;overflow-y:auto;padding:4px 8px;"></div>
+      <div id="songList" style="display:flex; flex-direction:column; align-items:center; gap:6px; max-height:320px; overflow-y:auto; padding:4px 8px;"></div>
       <button class="backBtn" id="backFromSongs">← Volver al menú</button>
     </div>
 
+    <!-- PANTALLA DE INICIO DE CANCIÓN -->
     <div id="screenPlay" class="screen">
       <h2 id="playTitle" style="color:#e8b84b; letter-spacing:2px;"></h2>
       <p id="playMeta" class="tip"></p>
       <p class="tip" style="margin-top:6px;">
-        <b>A</b>=Bb &nbsp;<b>S</b>=C &nbsp;<b>D</b>=D &nbsp;<b>F</b>=Eb &nbsp;<b>G</b>=F &nbsp;<b>H</b>=G &nbsp;<b>J</b>=A &nbsp;<b>K</b>=Bb5 &nbsp;— o toca los círculos
+        Teclas: <b>A</b>=Do(Sib) &nbsp;<b>S</b>=Re &nbsp;<b>D</b>=Mi &nbsp;<b>F</b>=Fa &nbsp;<b>G</b>=Sol &nbsp;<b>H</b>=La &nbsp;<b>J</b>=Si &nbsp;— o toca los círculos en pantalla
       </p>
+      <div id="difficultyRow" style="display:flex; gap:8px; margin-top:8px;">
+        <button class="diffBtn" data-diff="facil">Fácil</button>
+        <button class="diffBtn" data-diff="medio">Medio</button>
+        <button class="diffBtn" data-diff="dificil">Difícil</button>
+      </div>
+      <div id="bpmRow" style="display:flex; align-items:center; gap:10px; margin-top:10px;">
+        <button class="bpmBtn" id="bpmDown">−</button>
+        <span class="tip" style="font-size:14px; color:#f2e9dc; min-width:110px;">Tempo: <b id="bpmValue">108</b> BPM</span>
+        <button class="bpmBtn" id="bpmUp">+</button>
+        <button class="backBtn" id="bpmReset" style="margin-top:0; margin-left:4px;">reset</button>
+      </div>
       <button class="startBtn" id="startBtn">Cargando sonidos…</button>
       <button class="backBtn" id="backFromPlay">← Volver</button>
     </div>
 
+    <!-- FIN DE CANCIÓN -->
     <div id="screenEnd" class="screen">
       <h2 style="color:#e8b84b; letter-spacing:2px;">¡Canción terminada!</h2>
       <p id="endScore" style="font-size:20px; margin:8px 0;"></p>
@@ -151,77 +242,105 @@
 
 <script>
 /* ══════════════════════════════════════════
-   ESCALA: Bb mayor completa Bb-Bb5
-   Índice: 0   1  2  3   4  5  6
-   Nota:   Bb  C  D  Eb  F  G  A
-   Bb5 se representa con octaveUp=true en el índice 0 (Bb)
+   CONSTANTES Y CONFIGURACIÓN
 ══════════════════════════════════════════ */
-const canvas = document.getElementById('gameCanvas');
-const ctx    = canvas.getContext('2d');
+const canvas  = document.getElementById('gameCanvas');
+const ctx     = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
 const FPS = 60;
 
-const LANES       = ['A','S','D','F','G','H','J','K'];
-const NOTE_NAMES  = ['Bb','C','D','Eb','F','G','A','Bb5'];
-const SAMPLE_NOTE = ['Bb','C','D','Eb','F','G','A','Bb']; // Bb5 usa mismo sample de Bb pero octava arriba
-const LANE_COLORS = ['#e24b4a','#d4831a','#c9a227','#2a9e74','#2f8fd1','#5f6fdd','#a259c9','#e24b4a'];
-const LANE_X      = LANES.map((_, i) => 28 + i * 84 + 14);
-const LANE_W      = 58;
+// 7 notas fijas (Do=C, Re=D, Mib=Eb, Fa=F, Sol=G, La=A, Sib=Bb).
+// La partitura original usa "Mi" (E) y "Si" (B), que no tenemos como sample:
+// Mi -> se sustituye por Mib (Eb), como pediste.
+// Si -> no hay sample de Si natural tampoco, se sustituye por Sib (Bb).
+// 7 notas de la escala de Sib mayor, con Do = Sib (tal como esta planteado
+// el juego desde el inicio). Bajo este mapeo movible, Mi = D y Si = A ya
+// existen como samples reales -- no hace falta sustituir nada.
+const LANES       = ['A','S','D','F','G','H','J'];
+const NOTE_NAMES  = ['Do','Re','Mi','Fa','Sol','La','Si'];
+const SAMPLE_NOTE = ['Bb','C','D','Eb','F','G','A']; // nombre real del archivo .wav por carril
+const LANE_COLORS = ['#e24b4a','#d4831a','#c9a227','#2a9e74','#2f8fd1','#5f6fdd','#a259c9'];
+const LANE_X      = LANES.map((_, i) => 45 + i * 95 + 30);
+const LANE_W      = 65;
 const HIT_Y       = H - 90;
 const NOTE_SPEED  = 2.8;
 
+// Niveles de dificultad: controlan que tan separadas caen las notas (gapMult),
+// que tan rapido caen (speedMult) y que tan permisivo es el "golpe" (hitWindow).
+// En facil, las notas repetidas en el mismo carril (como las dos Sib seguidas)
+// quedan mas separadas en el tiempo, para que se puedan tocar una por una
+// sin problema. En dificil quedan pegadas como en la partitura original.
+const DIFFICULTY = {
+  facil:   { label: 'Fácil',   speedMult: 0.7, gapMult: 1.6, hitWindow: 68 },
+  medio:   { label: 'Medio',   speedMult: 1.0, gapMult: 1.15, hitWindow: 48 },
+  dificil: { label: 'Difícil', speedMult: 1.35, gapMult: 0.85, hitWindow: 34 }
+};
+let difficulty = 'medio';
+
+// BPM ajustable por el jugador. null = usa el bpm original de la cancion.
+// Se guarda el valor efectivo aparte para no mutar el objeto de la cancion.
+let bpmOverride = null;
+const BPM_MIN = 40, BPM_MAX = 220, BPM_STEP = 5;
+function effectiveBpm() {
+  return bpmOverride !== null ? bpmOverride : currentSong.bpm;
+}
+
 // Duración en beats
-const E=0.5, Q=1, H2=2, W4=4;
+const Q = 1, E = 0.5, H2 = 2, W4 = 4;
 
 /* ══════════════════════════════════════════
    CANCIONES
-   [laneIdx, beats, octaveUp?, staccato?]
-   octaveUp = reproduce el sample una octava arriba (Bb5 = Bb con octaveUp)
-   staccato = nota corta/picada
-   laneIdx -1 = silencio
-
-   Escala en el juego:
-   0=Bb  1=C  2=D  3=Eb  4=F  5=G  6=A   0+octave=Bb5
+   Cada nota: [laneIndex, beats, octaveUp?, staccato?]
+   laneIndex -1 = silencio
+   octaveUp = reproduce el sample una octava arriba (para las notas Do* y Re* de la hoja)
+   staccato = nota corta/picada (se suelta sola rapido, para las marcadas "|")
+   Tonos del juego: Do=Sib(Bb) Re=C Mi=D Fa=Eb Sol=F La=G Si=A
+   (con Do=Sib, la palabra "sib" de la partitura es literalmente el mismo Do,
+   por eso cae en el mismo carril -- no hace falta sustituir Mi ni Si por nada,
+   ya existen como samples reales dentro de la escala de Sib mayor)
 ══════════════════════════════════════════ */
 const SONGS = [
   {
     id: 'cucaracha',
     title: 'La Cucaracha',
     bpm: 108,
+    // Transcripcion literal de la partitura: empieza en Sib (Do) y cierra
+    // con un Bb5 sostenido (Do una octava arriba), como se pidio.
+    // Estructura: Estrofa A, Estrofa B, Estrofa A + coda final.
     notes: [
-      // === Estrofa A ===
-      // Bb Bb Bb Eb G
+      // ===== Estrofa A =====
+      // do do do fa la
       [0,E],[0,E],[0,E],[3,E],[5,Q],
-      // Bb Bb Bb Eb G
+      // do do do fa la
       [0,E],[0,E],[0,E],[3,E],[5,Q],
       [-1,E],
-      // Eb Eb D D C C Bb
+      // fa fa mi mi re re do
       [3,E],[3,E],[2,E],[2,E],[1,E],[1,E],[0,Q],
       [-1,E],
-      // Bb Bb Bb D F|
+      // do do do mi so|   ("|" = nota picada/corta)
       [0,E],[0,E],[0,E],[2,E],[4,E,false,true],
-      // Bb Bb Bb D F|
+      // do do do mi so|
       [0,E],[0,E],[0,E],[2,E],[4,E,false,true],
       [-1,E],
-      // Bb5 C5 Bb5 A G F| Eb
-      [7,Q],[1,Q,true],[7,Q],[6,Q],[5,Q],[4,E,false,true],[3,H2],
+      // do* re* do* sib la so| fa   (* = octava arriba; "sib" = mismo Do, registro normal)
+      [0,Q,true],[1,Q,true],[0,Q,true],[0,Q],[5,Q],[4,E,false,true],[3,H2],
       [-1,H2],
 
-      // === Estrofa B ===
-      // Bb Bb Eb Eb G G Bb5 G
-      [0,E],[0,E],[3,E],[3,E],[5,E],[5,E],[7,E],[5,Q],
+      // ===== Estrofa B =====
+      // do do fa fa la la do* la
+      [0,E],[0,E],[3,E],[3,E],[5,E],[5,E],[0,E,true],[5,Q],
       [-1,E],
-      // Bb5 C5 Bb5 A G Bb5 A F|
-      [7,E],[1,E,true],[7,E],[6,E],[5,E],[7,E],[6,E],[4,E,false,true],
+      // do* re* do* sib la do* si so|
+      [0,E,true],[1,E,true],[0,E,true],[0,E],[5,E],[0,E,true],[6,E],[4,E,false,true],
       [-1,E],
-      // Bb Bb D D F| F| A F|
+      // do do mi mi so| so| si so|
       [0,E],[0,E],[2,E],[2,E],[4,E,false,true],[4,E,false,true],[6,E],[4,E,false,true],
       [-1,E],
-      // Bb5 C5 Bb5 A G F| Eb
-      [7,Q],[1,Q,true],[7,Q],[6,Q],[5,Q],[4,E,false,true],[3,H2],
+      // do* re* do* sib la so| fa
+      [0,Q,true],[1,Q,true],[0,Q,true],[0,Q],[5,Q],[4,E,false,true],[3,H2],
       [-1,H2],
 
-      // === Estrofa A (repite) ===
+      // ===== Estrofa A (repite) =====
       [0,E],[0,E],[0,E],[3,E],[5,Q],
       [0,E],[0,E],[0,E],[3,E],[5,Q],
       [-1,E],
@@ -230,48 +349,26 @@ const SONGS = [
       [0,E],[0,E],[0,E],[2,E],[4,E,false,true],
       [0,E],[0,E],[0,E],[2,E],[4,E,false,true],
       [-1,E],
-      [7,Q],[1,Q,true],[7,Q],[6,Q],[5,Q],[4,E,false,true],[3,W4],
+      [0,Q,true],[1,Q,true],[0,Q,true],[0,Q],[5,Q],[4,E,false,true],[3,Q],
+      [-1,E],
+      // Coda final: cierre sostenido en Bb5 (Do una octava arriba), como se pidio
+      [0,W4,true],
       [-1,H2]
     ]
   },
   {
-    id: 'pollitos',
+    id: 'marranitos',
     title: 'Los Pollitos',
     bpm: 96,
     notes: [
-      // Los po-lli-tos di-cen   pío pío pío
-      [2,Q],[2,Q],[2,Q],[2,E],[3,E],[4,Q], [-1,E],
-      [4,E],[3,E],[4,E],[3,E],[2,H2],       [-1,E],
-      // cuan-do tie-nen ham-bre  cuan-do tie-nen frío
-      [4,Q],[4,Q],[4,Q],[3,E],[4,E],[3,Q], [-1,E],
-      [3,E],[2,E],[3,E],[2,E],[1,H2],       [-1,E],
-      // La ma-má les bus-ca
-      [1,E],[2,E],[3,E],[2,Q],[1,Q],        [-1,E],
-      // el tri-go y el maíz
-      [3,E],[3,E],[3,E],[3,E],[3,E],[4,Q], [-1,E],
-      // les da su co-mi-da
-      [1,E],[2,E],[3,E],[2,Q],[1,Q],        [-1,E],
-      // y les pres-ta a-bri-go
-      [4,E],[4,E],[4,E],[3,E],[2,H2],       [-1,H2]
-    ]
-  },
-  {
-    id: 'cielito',
-    title: 'Cielito Lindo',
-    bpm: 100,
-    notes: [
-      // De la Sie-rra Mo-re-na
-      [4,Q],[4,Q],[3,Q],[2,Q],          [-1,E],
-      [1,Q],[1,Q],[2,Q],[0,H2],          [-1,E],
-      // Cie-li-to lin-do vie-nen ba-jan-do
-      [4,Q],[4,Q],[3,Q],[2,Q],          [-1,E],
-      [1,Q],[0,Q],[2,Q],[0,H2],          [-1,E],
-      // Ay ay ay ay
-      [2,Q],[2,Q],[3,Q],[4,Q],          [-1,E],
-      [4,Q],[3,Q],[2,Q],[1,H2],          [-1,E],
-      // can-ta y no llo-res
-      [2,Q],[2,Q],[1,Q],[0,Q],          [-1,E],
-      [1,Q],[2,Q],[1,Q],[0,W4],          [-1,H2]
+      [1,Q],[1,Q],[1,Q],[1,E],[2,E],[3,Q],  [-1,E],
+      [3,E],[2,E],[3,E],[2,E],[1,H2],        [-1,E],
+      [3,Q],[3,Q],[3,Q],[2,E],[3,E],[2,Q],  [-1,E],
+      [2,E],[1,E],[2,E],[1,E],[0,H2],        [-1,E],
+      [0,E],[1,E],[2,E],[1,Q],[0,Q],         [-1,E],
+      [2,E],[2,E],[2,E],[2,E],[2,E],[3,Q],  [-1,E],
+      [0,E],[1,E],[2,E],[1,Q],[0,Q],         [-1,E],
+      [3,E],[3,E],[3,E],[2,E],[1,H2],        [-1,H2]
     ]
   },
   {
@@ -279,16 +376,29 @@ const SONGS = [
     title: 'La Bamba',
     bpm: 126,
     notes: [
-      // riff Bb-C-D
-      [0,E],[1,E],[2,Q],[2,Q], [-1,E],
-      [1,E],[2,E],[1,Q],[0,Q], [-1,E],
-      [0,E],[1,E],[2,Q],[2,Q], [-1,E],
-      [1,E],[2,E],[1,Q],[0,Q], [-1,Q],
-      // pa-ra bai-lar la bam-ba
-      [0,E],[0,E],[0,E],[0,E],[1,Q],[2,Q], [-1,E],
-      [0,E],[0,E],[0,E],[0,E],[1,Q],[2,E],[3,E], [-1,E],
-      [2,E],[1,E],[2,E],[1,E],[2,Q], [-1,E],
-      [3,E],[4,E],[3,E],[2,E],[1,H2], [-1,H2]
+      [6,E],[0,E],[1,Q],[1,Q],  [-1,E],
+      [0,E],[1,E],[0,Q],[6,Q],  [-1,E],
+      [6,E],[0,E],[1,Q],[1,Q],  [-1,E],
+      [0,E],[1,E],[0,Q],[6,Q],  [-1,Q],
+      [6,E],[6,E],[6,E],[6,E],[0,Q],[1,Q], [-1,E],
+      [6,E],[6,E],[6,E],[6,E],[0,Q],[1,E],[2,E], [-1,E],
+      [1,E],[0,E],[1,E],[0,E],[1,Q], [-1,E],
+      [2,E],[3,E],[2,E],[1,E],[0,H2], [-1,H2]
+    ]
+  },
+  {
+    id: 'cielito',
+    title: 'Cielito Lindo',
+    bpm: 100,
+    notes: [
+      [3,Q],[3,Q],[2,Q],[1,Q],          [-1,E],
+      [0,Q],[0,Q],[1,Q],[6,H2],          [-1,E],
+      [3,Q],[3,Q],[2,Q],[1,Q],          [-1,E],
+      [0,Q],[6,Q],[1,Q],[6,H2],          [-1,E],
+      [1,Q],[1,Q],[2,Q],[3,Q],          [-1,E],
+      [3,Q],[2,Q],[1,Q],[0,H2],          [-1,E],
+      [1,Q],[1,Q],[0,Q],[6,Q],          [-1,E],
+      [0,Q],[1,Q],[0,Q],[6,W4],          [-1,H2]
     ]
   }
 ];
@@ -296,23 +406,27 @@ const SONGS = [
 /* ══════════════════════════════════════════
    AUDIO
 ══════════════════════════════════════════ */
-let audioCtx = null;
+let audioCtx     = null;
 const audioBuffers = NOTE_NAMES.map(() => null);
 const activeSrcs   = NOTE_NAMES.map(() => null);
 let samplesReady   = false;
 
-// Síntesis de respaldo: Bb4 C5 D5 Eb5 F5 G5 A5
+// Síntesis como respaldo si no hay archivos WAV
+// Do Re Mib Fa Sol La Sib (C D Eb F G A Bb, empezando en Do central)
 function synth(laneIdx, miss, rateBase) {
   if (!audioCtx) return;
-  const freqs = [466.16, 523.25, 587.33, 622.25, 698.46, 783.99, 880.00, 932.33];
+  const freqs = [261.63, 293.66, 311.13, 349.23, 392.00, 440.00, 466.16];
+  const mult = (rateBase || 1) * (miss ? 0.5 : 1);
   const osc  = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   osc.type = 'triangle';
-  osc.frequency.value = freqs[laneIdx] * (rateBase || 1) * (miss ? 0.5 : 1);
+  osc.frequency.value = freqs[laneIdx] * mult;
   gain.gain.setValueAtTime(miss ? 0.15 : 0.5, audioCtx.currentTime);
   gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (miss ? 0.12 : 0.45));
-  osc.connect(gain); gain.connect(audioCtx.destination);
-  osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.5);
 }
 
 function initAudio() {
@@ -323,13 +437,17 @@ function initAudio() {
 
 async function preloadSamples() {
   initAudio();
-  await Promise.all(SAMPLE_NOTE.map(async (name, i) => {
+  const tasks = SAMPLE_NOTE.map(async (name, i) => {
     try {
       const res = await fetch(`sounds/${name}.wav`);
-      if (!res.ok) throw 0;
-      audioBuffers[i] = await audioCtx.decodeAudioData(await res.arrayBuffer());
-    } catch { /* usará síntesis */ }
-  }));
+      if (!res.ok) throw new Error('no file');
+      const arr = await res.arrayBuffer();
+      audioBuffers[i] = await audioCtx.decodeAudioData(arr);
+    } catch {
+      // sin archivo -> usaremos sintesis
+    }
+  });
+  await Promise.all(tasks);
   samplesReady = true;
   enableStart();
 }
@@ -340,31 +458,32 @@ function enableStart() {
   btn.textContent = 'Empezar';
 }
 
-// octaveUp: reproduce el sample de Bb a doble velocidad → Bb5
+// octaveUp: true reproduce el mismo sample al doble de velocidad (una octava
+// arriba). Se usa para las notas "Do*"/"Re*" de la partitura, que no tienen
+// su propio archivo grabado -- reutilizamos el sample base y lo pitcheamos.
 function playNote(laneIdx, miss, octaveUp) {
-  // Carril 7 = Bb5: usa el sample de Bb (índice 0) una octava arriba
-  if (laneIdx === 7) { laneIdx = 0; octaveUp = true; }
   if (!audioCtx) initAudio();
   if (audioCtx.state === 'suspended') audioCtx.resume();
   stopNote(laneIdx);
-  const rate = (octaveUp ? 2 : 1) * (miss ? 0.75 : 1);
+
+  const rateBase = octaveUp ? 2 : 1;
   if (audioBuffers[laneIdx]) {
     const src  = audioCtx.createBufferSource();
     const gain = audioCtx.createGain();
     src.buffer = audioBuffers[laneIdx];
     src.loop   = true;
-    gain.gain.value    = miss ? 0.3 : 1;
-    src.playbackRate.value = rate;
-    src.connect(gain); gain.connect(audioCtx.destination);
+    gain.gain.value      = miss ? 0.3 : 1;
+    src.playbackRate.value = (miss ? 0.75 : 1) * rateBase;
+    src.connect(gain);
+    gain.connect(audioCtx.destination);
     src.start(0);
     activeSrcs[laneIdx] = { src, gain };
   } else {
-    synth(laneIdx, miss, octaveUp ? 2 : 1);
+    synth(laneIdx, miss, rateBase);
   }
 }
 
 function stopNote(laneIdx) {
-  if (laneIdx === 7) laneIdx = 0;
   const a = activeSrcs[laneIdx];
   if (!a) return;
   const now = audioCtx.currentTime;
@@ -375,23 +494,43 @@ function stopNote(laneIdx) {
   activeSrcs[laneIdx] = null;
 }
 
-window.addEventListener('pointerdown', () => { if (audioCtx) audioCtx.resume(); });
+// Desbloquear contexto de audio en iOS/Safari
+window.addEventListener('pointerdown', () => { if (audioCtx) audioCtx.resume(); }, { once: false });
 
 /* ══════════════════════════════════════════
    ESTADO DEL JUEGO
 ══════════════════════════════════════════ */
-let mode = 'free', currentSong = SONGS[0], running = false;
-let notes=[], particles=[], floats=[];
-let score=0, combo=0, hits=0, misses=0, total=0;
-let spawnTimer=0, nextGapFrames=0, songNoteIdx=0, songDone=false;
-const keyDown = {A:false,S:false,D:false,F:false,G:false,H:false,J:false,K:false};
+let mode        = 'free';   // 'free' | 'song'
+let currentSong = SONGS[0];
+let running     = false;
+let gameOver    = false;
+
+let notes      = [];
+let particles  = [];
+let score      = 0;
+let combo      = 0;
+let hits       = 0;
+let misses     = 0;
+let total      = 0;
+
+let spawnTimer    = 0;
+let nextGapFrames = 0;
+let songNoteIdx   = 0;
+let songDone      = false;
+
+const keyDown = { A: false, S: false, D: false, F: false, G: false, H: false, J: false };
 
 /* ══════════════════════════════════════════
-   NAVEGACIÓN
+   NAVEGACIÓN DE PANTALLAS
 ══════════════════════════════════════════ */
-const SCREENS = ['screenMenu','screenSongs','screenPlay','screenEnd'];
+const screens = ['screenMenu','screenSongs','screenPlay','screenEnd'];
 function showScreen(id) {
-  SCREENS.forEach(s => document.getElementById(s).classList.toggle('active', s===id));
+  screens.forEach(s => {
+    document.getElementById(s).classList.toggle('active', s === id);
+  });
+  if (id !== 'screenPlay') {
+    document.getElementById('hud').style.display = 'flex';
+  }
 }
 
 function buildSongList() {
@@ -400,53 +539,114 @@ function buildSongList() {
   SONGS.forEach(song => {
     const btn = document.createElement('button');
     btn.className = 'songBtn';
-    btn.innerHTML = `<strong>${song.title}</strong><span class="songMeta">${song.bpm} BPM · ${song.notes.filter(([l])=>l>=0).length} notas</span>`;
+    btn.innerHTML = `
+      <strong>${song.title}</strong>
+      <span class="songMeta">${song.bpm} BPM · ${countPlayableNotes(song)} notas</span>
+    `;
     btn.addEventListener('click', () => selectSong(song));
     list.appendChild(btn);
   });
 }
 
+function countPlayableNotes(song) {
+  return song.notes.filter(([l]) => l >= 0).length;
+}
+
 function selectSong(song) {
-  currentSong = song; mode = 'song';
+  currentSong = song;
+  mode = 'song';
+  bpmOverride = null; // reinicia al tempo original de esta cancion
   document.getElementById('playTitle').textContent = song.title;
-  document.getElementById('playMeta').textContent  = `${song.bpm} BPM · ${song.notes.filter(([l])=>l>=0).length} notas`;
-  document.getElementById('modeTag').textContent   = 'CANCIÓN';
-  document.getElementById('modeTag').className     = 'song';
+  document.getElementById('playMeta').textContent =
+    `${song.bpm} BPM (original) · ${countPlayableNotes(song)} notas`;
+  document.getElementById('modeTag').textContent = 'CANCIÓN';
+  document.getElementById('modeTag').className = 'song';
+  document.getElementById('difficultyRow').style.display = 'flex';
+  document.getElementById('bpmRow').style.display = 'flex';
+  updateBpmDisplay();
   showScreen('screenPlay');
+}
+
+function updateBpmDisplay() {
+  document.getElementById('bpmValue').textContent = effectiveBpm();
 }
 
 document.getElementById('btnFree').addEventListener('click', () => {
   mode = 'free';
   document.getElementById('playTitle').textContent = 'Modo libre';
-  document.getElementById('playMeta').textContent  = 'Toca cualquier tecla o círculo. Bb · C · D · Eb · F · G · A · Bb5';
-  document.getElementById('modeTag').textContent   = 'LIBRE';
-  document.getElementById('modeTag').className     = '';
+  document.getElementById('playMeta').textContent =
+    'Notas aleatorias en escala de Sib. Toca y explora.';
+  document.getElementById('modeTag').textContent = 'LIBRE';
+  document.getElementById('modeTag').className = '';
+  document.getElementById('difficultyRow').style.display = 'none';
+  document.getElementById('bpmRow').style.display = 'none';
   showScreen('screenPlay');
 });
-document.getElementById('btnSongs').addEventListener('click', () => { buildSongList(); showScreen('screenSongs'); });
+
+document.getElementById('btnSongs').addEventListener('click', () => {
+  buildSongList();
+  showScreen('screenSongs');
+});
+
+// Selector de dificultad (solo aplica en modo cancion)
+document.querySelectorAll('.diffBtn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    difficulty = btn.dataset.diff;
+    document.querySelectorAll('.diffBtn').forEach(b => b.classList.toggle('active', b === btn));
+  });
+});
+document.querySelector(`.diffBtn[data-diff="${difficulty}"]`).classList.add('active');
+
+// Control de tempo (+/- BPM), independiente de la dificultad elegida
+document.getElementById('bpmDown').addEventListener('click', () => {
+  bpmOverride = Math.max(BPM_MIN, effectiveBpm() - BPM_STEP);
+  updateBpmDisplay();
+});
+document.getElementById('bpmUp').addEventListener('click', () => {
+  bpmOverride = Math.min(BPM_MAX, effectiveBpm() + BPM_STEP);
+  updateBpmDisplay();
+});
+document.getElementById('bpmReset').addEventListener('click', () => {
+  bpmOverride = null;
+  updateBpmDisplay();
+});
+
 document.getElementById('backFromSongs').addEventListener('click', () => showScreen('screenMenu'));
-document.getElementById('backFromPlay').addEventListener('click',  () => mode==='free' ? showScreen('screenMenu') : showScreen('screenSongs'));
-document.getElementById('backFromEnd').addEventListener('click',   () => showScreen('screenSongs'));
-document.getElementById('btnPlayAgain').addEventListener('click',  () => showScreen('screenPlay'));
+document.getElementById('backFromPlay').addEventListener('click', () => {
+  if (mode === 'free') showScreen('screenMenu');
+  else showScreen('screenSongs');
+});
+document.getElementById('backFromEnd').addEventListener('click', () => {
+  showScreen('screenSongs');
+});
+document.getElementById('btnPlayAgain').addEventListener('click', () => {
+  showScreen('screenPlay');
+});
 
 /* ══════════════════════════════════════════
-   INICIO / FIN
+   INICIO Y REINICIO
 ══════════════════════════════════════════ */
-document.getElementById('startBtn').addEventListener('click', () => { initAudio(); startGame(); });
+document.getElementById('startBtn').addEventListener('click', () => {
+  initAudio();
+  startGame();
+});
 
 function startGame() {
-  notes=[]; particles=[]; floats=[];
-  score=0; combo=0; hits=0; misses=0; total=0;
-  spawnTimer=0; songNoteIdx=0; songDone=false; running=true;
-  nextGapFrames = mode==='song' ? framesForNextNote() : Infinity;
-  document.getElementById('hud').style.display = mode==='free' ? 'none' : 'flex';
+  notes = []; particles = [];
+  score = 0; combo = 0; hits = 0; misses = 0; total = 0;
+  spawnTimer = 0; songNoteIdx = 0; songDone = false;
+  gameOver = false;
+  running = true;
+  nextGapFrames = mode === 'song' ? framesForNextNote() : Infinity;
+  document.getElementById('hud').style.display = mode === 'free' ? 'none' : 'flex';
   updateHUD();
   document.getElementById('overlay').style.display = 'none';
 }
 
 function endGame() {
   running = false;
-  const acc = total > 0 ? Math.round((hits/total)*100) : 100;
+  gameOver = true;
+  const acc = total > 0 ? Math.round((hits / total) * 100) : 100;
   document.getElementById('endScore').textContent = `Puntos: ${score}`;
   document.getElementById('endAcc').textContent   = `Precisión: ${acc}% · Combo máx: ${combo}`;
   document.getElementById('overlay').style.display = 'flex';
@@ -458,169 +658,267 @@ function endGame() {
 ══════════════════════════════════════════ */
 function framesForNextNote() {
   if (songNoteIdx >= currentSong.notes.length) return Infinity;
-  const [,beats] = currentSong.notes[songNoteIdx];
-  return Math.max(1, Math.round(beats * FPS * (60 / currentSong.bpm)));
+  const [, beats] = currentSong.notes[songNoteIdx];
+  const fpb = FPS * (60 / effectiveBpm());
+  const gapMult = DIFFICULTY[difficulty].gapMult;
+  return Math.max(1, Math.round(beats * fpb * gapMult));
 }
 
 function spawnNext() {
-  if (songNoteIdx >= currentSong.notes.length) { songDone=true; return; }
-  const [lane,,octaveUp,staccato] = currentSong.notes[songNoteIdx++];
-  if (lane >= 0) notes.push({ lane, y:-22, hit:false, missed:false, octaveUp:!!octaveUp, staccato:!!staccato });
+  if (songNoteIdx >= currentSong.notes.length) {
+    songDone = true;
+    return;
+  }
+  const [lane, , octaveUp, staccato] = currentSong.notes[songNoteIdx];
+  songNoteIdx++;
+  if (lane >= 0) {
+    notes.push({ lane, y: -22, hit: false, missed: false, octaveUp: !!octaveUp, staccato: !!staccato });
+  }
 }
 
 /* ══════════════════════════════════════════
-   HIT
+   PARTÍCULAS
+══════════════════════════════════════════ */
+function burst(x, y, color) {
+  for (let i = 0; i < 14; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 1.5 + Math.random() * 5;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 1,
+      color,
+      life: 1
+    });
+  }
+}
+
+/* ══════════════════════════════════════════
+   LÓGICA DE HIT
 ══════════════════════════════════════════ */
 function tryHit(laneIdx) {
   if (!running) return;
+
+  // Modo libre: tocar simplemente suena la nota, sin lineas ni timing.
   if (mode === 'free') {
     burst(LANE_X[laneIdx], HIT_Y, LANE_COLORS[laneIdx]);
-    // En modo libre, Bb5 se activa manteniendo MAYÚSCULAS o doble-toque
-    // Simplificación: A siempre suena Bb normal en modo libre
-    playNote(laneIdx === 7 ? 0 : laneIdx, false, laneIdx === 7);
+    playNote(laneIdx, false);
     return;
   }
-  let best=null, bestDist=9999;
+
+  let best = null, bestDist = 9999;
   notes.forEach(n => {
-    if (n.lane===laneIdx && !n.hit && !n.missed) {
+    if (n.lane === laneIdx && !n.hit && !n.missed) {
       const d = Math.abs(n.y - HIT_Y);
-      if (d < bestDist) { bestDist=d; best=n; }
+      if (d < bestDist) { bestDist = d; best = n; }
     }
   });
-  if (best && bestDist < 48) {
-    best.hit=true; hits++; total++; combo++;
+
+  if (best && bestDist < DIFFICULTY[difficulty].hitWindow) {
+    best.hit = true;
+    hits++; total++;
+    combo++;
     const perfect = bestDist < 16;
-    score += (perfect ? 100 : 50) + Math.min(combo*2, 60);
+    const pts = (perfect ? 100 : 50) + Math.min(combo * 2, 60);
+    score += pts;
     burst(LANE_X[laneIdx], HIT_Y, LANE_COLORS[laneIdx]);
     playNote(laneIdx, false, best.octaveUp);
-    showFeedback(LANE_X[laneIdx], HIT_Y-30, perfect?'PERFECT':'GOOD', perfect?'#e8b84b':'#a8e84b');
-    if (best.staccato) setTimeout(()=>stopNote(laneIdx), 140);
+    showFeedback(LANE_X[laneIdx], HIT_Y - 30, perfect ? 'PERFECT' : 'GOOD', perfect ? '#e8b84b' : '#a8e84b');
+    if (best.staccato) {
+      // nota "picada": se suelta sola rapido sin importar si sigues
+      // presionando la tecla, para que suene corta como marca la partitura.
+      setTimeout(() => stopNote(laneIdx), 140);
+    }
   } else {
-    combo=0; misses++; total++;
+    combo = 0;
     playNote(laneIdx, true);
+    misses++; total++;
   }
   updateHUD();
 }
 
-function burst(x, y, color) {
-  for (let i=0;i<14;i++) {
-    const a=Math.random()*Math.PI*2, s=1.5+Math.random()*5;
-    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1,color,life:1});
-  }
+/* ══════════════════════════════════════════
+   FEEDBACK FLOTANTE
+══════════════════════════════════════════ */
+const floats = [];
+function showFeedback(x, y, text, color) {
+  floats.push({ x, y, text, color, life: 1 });
 }
-
-function showFeedback(x, y, text, color) { floats.push({x,y,text,color,life:1}); }
 
 /* ══════════════════════════════════════════
    UPDATE
 ══════════════════════════════════════════ */
 function update() {
   if (!running) return;
-  if (mode==='song') {
+
+  // En modo libre no hay notas cayendo ni nada que "acertar a tiempo":
+  // solo se toca y suena. El spawn de notas es exclusivo de modo cancion.
+  if (mode === 'song') {
     spawnTimer++;
-    if (spawnTimer >= nextGapFrames) { spawnTimer=0; spawnNext(); nextGapFrames=framesForNextNote(); }
+    if (spawnTimer >= nextGapFrames) {
+      spawnTimer = 0;
+      spawnNext();
+      nextGapFrames = framesForNextNote();
+    }
+
     notes.forEach(n => {
-      if (n.hit||n.missed) return;
-      n.y += NOTE_SPEED;
-      if (n.y > HIT_Y+50) { n.missed=true; combo=0; misses++; total++; updateHUD(); }
+      if (n.hit || n.missed) return;
+      n.y += NOTE_SPEED * DIFFICULTY[difficulty].speedMult;
+      if (n.y > HIT_Y + 50) {
+        n.missed = true;
+        combo = 0;
+        misses++; total++;
+        updateHUD();
+      }
     });
-    notes = notes.filter(n => n.y<H+40 && !n.hit);
+    notes = notes.filter(n => n.y < H + 40 && !(n.hit));
   }
-  particles.forEach(p => { p.x+=p.vx; p.y+=p.vy; p.vy+=0.25; p.life-=0.028; });
-  particles = particles.filter(p => p.life>0);
-  floats.forEach(f => { f.y-=0.8; f.life-=0.035; });
-  for (let i=floats.length-1;i>=0;i--) { if(floats[i].life<=0) floats.splice(i,1); }
-  if (mode==='song' && songDone && notes.length===0) { running=false; setTimeout(endGame,600); }
+
+  particles.forEach(p => {
+    p.x  += p.vx;
+    p.y  += p.vy;
+    p.vy += 0.25;
+    p.life -= 0.028;
+  });
+  particles = particles.filter(p => p.life > 0);
+
+  floats.forEach(f => { f.y -= 0.8; f.life -= 0.035; });
+  for (let i = floats.length - 1; i >= 0; i--) {
+    if (floats[i].life <= 0) floats.splice(i, 1);
+  }
+
+  if (mode === 'song' && songDone && notes.length === 0) {
+    setTimeout(endGame, 600);
+    running = false;
+  }
 }
 
 /* ══════════════════════════════════════════
    DRAW
 ══════════════════════════════════════════ */
 function draw() {
-  ctx.clearRect(0,0,W,H);
+  ctx.clearRect(0, 0, W, H);
 
-  // Carriles
-  for (let i=0;i<LANES.length;i++) {
-    const x = LANE_X[i]-LANE_W/2;
-    ctx.fillStyle = keyDown[LANES[i]] ? LANE_COLORS[i]+'22' : 'rgba(255,255,255,0.02)';
-    ctx.fillRect(x,0,LANE_W,H);
-    if (i>0) {
-      ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=1;
-      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
+  for (let i = 0; i < LANES.length; i++) {
+    const x = LANE_X[i] - LANE_W / 2;
+    ctx.fillStyle = keyDown[LANES[i]]
+      ? LANE_COLORS[i] + '22'
+      : 'rgba(255,255,255,0.02)';
+    ctx.fillRect(x, 0, LANE_W, H);
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1;
+    if (i > 0) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, H);
+      ctx.stroke();
     }
-    // Etiqueta nota arriba
-    ctx.fillStyle = LANE_COLORS[i]+'aa';
-    ctx.font='bold 12px Arial'; ctx.textAlign='center'; ctx.textBaseline='top';
-    ctx.fillText(NOTE_NAMES[i], LANE_X[i], 8);
-    // Etiqueta tecla abajo de la nota
-    ctx.fillStyle='#5a4f3f';
-    ctx.font='11px Arial';
-    ctx.fillText(LANES[i], LANE_X[i], 24);
+
+    ctx.fillStyle = LANE_COLORS[i] + 'aa';
+    ctx.font = 'bold 13px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(NOTE_NAMES[i], LANE_X[i], 10);
   }
 
-  // Línea de golpe
-  ctx.strokeStyle='#e8b84b'; ctx.lineWidth=2.5;
-  ctx.shadowColor='#e8b84b'; ctx.shadowBlur=8;
-  ctx.beginPath(); ctx.moveTo(20,HIT_Y); ctx.lineTo(W-20,HIT_Y); ctx.stroke();
-  ctx.shadowBlur=0;
+  ctx.strokeStyle = '#e8b84b';
+  ctx.lineWidth = 2.5;
+  ctx.shadowColor = '#e8b84b';
+  ctx.shadowBlur = 8;
+  ctx.beginPath();
+  ctx.moveTo(20, HIT_Y);
+  ctx.lineTo(W - 20, HIT_Y);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
 
-  // Botones de carril
-  for (let i=0;i<LANES.length;i++) {
-    const x=LANE_X[i], pressed=keyDown[LANES[i]];
-    ctx.beginPath(); ctx.arc(x,HIT_Y,26,0,Math.PI*2);
+  for (let i = 0; i < LANES.length; i++) {
+    const x = LANE_X[i];
+    const pressed = keyDown[LANES[i]];
+    ctx.beginPath();
+    ctx.arc(x, HIT_Y, 26, 0, Math.PI * 2);
     ctx.fillStyle = pressed ? LANE_COLORS[i] : '#1e1a16';
     ctx.fill();
-    ctx.strokeStyle=LANE_COLORS[i]; ctx.lineWidth=pressed?3:2;
-    if (pressed) { ctx.shadowColor=LANE_COLORS[i]; ctx.shadowBlur=14; }
-    ctx.stroke(); ctx.shadowBlur=0;
-    ctx.fillStyle = pressed?'#fff':LANE_COLORS[i];
-    ctx.font='bold 15px Arial'; ctx.textBaseline='middle';
-    ctx.fillText(NOTE_NAMES[i], x, HIT_Y);
+    ctx.strokeStyle = LANE_COLORS[i];
+    ctx.lineWidth = pressed ? 3 : 2;
+    if (pressed) {
+      ctx.shadowColor = LANE_COLORS[i];
+      ctx.shadowBlur  = 14;
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = pressed ? '#fff' : LANE_COLORS[i];
+    ctx.font = 'bold 16px Arial';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(LANES[i], x, HIT_Y);
+
+    ctx.font = '10px Arial';
+    ctx.fillStyle = '#6a5f4e';
+    ctx.textBaseline = 'top';
+    ctx.fillText(NOTE_NAMES[i], x, HIT_Y + 32);
   }
 
-  // Notas
   notes.forEach(n => {
     if (n.hit) return;
-    const x=LANE_X[n.lane], r=n.staccato?15:20;
-    ctx.beginPath(); ctx.arc(x,n.y,r,0,Math.PI*2);
-    ctx.fillStyle = n.missed ? '#2a2520' : LANE_COLORS[n.lane];
+    const x = LANE_X[n.lane];
+    const missed = n.missed;
+    const radius = n.staccato ? 15 : 20; // notas picadas se ven mas chicas
+    ctx.beginPath();
+    ctx.arc(x, n.y, radius, 0, Math.PI * 2);
+    ctx.fillStyle = missed ? '#2a2520' : LANE_COLORS[n.lane];
     ctx.fill();
-    if (!n.missed) { ctx.shadowColor=LANE_COLORS[n.lane]; ctx.shadowBlur=12; }
-    ctx.strokeStyle = n.missed?'#3a3530':'#fff';
-    ctx.lineWidth=2;
-    if (n.staccato) ctx.setLineDash([3,3]);
-    ctx.stroke(); ctx.setLineDash([]); ctx.shadowBlur=0;
-    // Anillo extra para notas de octava alta (Bb5)
-    if (n.octaveUp) {
-      ctx.beginPath(); ctx.arc(x,n.y,r+5,0,Math.PI*2);
-      ctx.strokeStyle='#fff8'; ctx.lineWidth=1.5; ctx.stroke();
+    if (!missed) {
+      ctx.shadowColor = LANE_COLORS[n.lane];
+      ctx.shadowBlur  = 12;
     }
-    ctx.fillStyle = n.missed?'#4a4540':'#fff';
-    ctx.font='bold 10px Arial'; ctx.textBaseline='middle';
-    ctx.fillText(NOTE_NAMES[n.lane]+(n.octaveUp?"5":''), x, n.y);
+    ctx.strokeStyle = missed ? '#3a3530' : '#fff';
+    ctx.lineWidth = 2;
+    if (n.staccato) ctx.setLineDash([3, 3]); // borde punteado = nota corta
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.shadowBlur = 0;
+    if (n.octaveUp) {
+      // anillo extra = una octava arriba (Do*/Re* de la partitura)
+      ctx.beginPath();
+      ctx.arc(x, n.y, radius + 5, 0, Math.PI * 2);
+      ctx.strokeStyle = '#fff8';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+    ctx.fillStyle = missed ? '#4a4540' : '#fff';
+    ctx.font = 'bold 11px Arial';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(NOTE_NAMES[n.lane] + (n.octaveUp ? "'" : ''), x, n.y);
   });
 
-  // Partículas
   particles.forEach(p => {
-    ctx.globalAlpha=Math.max(0,p.life); ctx.fillStyle=p.color;
-    ctx.beginPath(); ctx.arc(p.x,p.y,4,0,Math.PI*2); ctx.fill();
-  }); ctx.globalAlpha=1;
+    ctx.globalAlpha = Math.max(0, p.life);
+    ctx.fillStyle   = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
 
-  // Feedback flotante
   floats.forEach(f => {
-    ctx.globalAlpha=Math.max(0,f.life); ctx.fillStyle=f.color;
-    ctx.font='bold 15px Arial'; ctx.textBaseline='middle';
-    ctx.fillText(f.text,f.x,f.y);
-  }); ctx.globalAlpha=1;
+    ctx.globalAlpha = Math.max(0, f.life);
+    ctx.fillStyle   = f.color;
+    ctx.font = 'bold 15px Arial';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(f.text, f.x, f.y);
+  });
+  ctx.globalAlpha = 1;
 }
 
 /* ══════════════════════════════════════════
    HUD
 ══════════════════════════════════════════ */
 function updateHUD() {
-  document.getElementById('score').textContent    = score;
+  document.getElementById('score').textContent   = score;
   document.getElementById('comboVal').textContent = combo;
-  document.getElementById('acc').textContent      = (total>0?Math.round((hits/total)*100):100)+'%';
+  const acc = total > 0 ? Math.round((hits / total) * 100) : 100;
+  document.getElementById('acc').textContent = acc + '%';
 }
 
 /* ══════════════════════════════════════════
@@ -630,48 +928,91 @@ document.addEventListener('keydown', e => {
   if (e.repeat) return;
   const k = e.key.toUpperCase();
   if (!LANES.includes(k)) return;
-  initAudio(); if (audioCtx.state==='suspended') audioCtx.resume();
-  keyDown[k]=true; tryHit(LANES.indexOf(k));
+  initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  keyDown[k] = true;
+  tryHit(LANES.indexOf(k));
 });
+
 document.addEventListener('keyup', e => {
-  const k=e.key.toUpperCase();
+  const k = e.key.toUpperCase();
   if (!LANES.includes(k)) return;
-  keyDown[k]=false; stopNote(LANES.indexOf(k));
+  keyDown[k] = false;
+  stopNote(LANES.indexOf(k));
 });
 
 /* ══════════════════════════════════════════
-   INPUT — TOUCH / POINTER
+   INPUT — TOUCH / MOUSE (Pointer Events)
+   Se usa Pointer Events en vez de solo Touch Events porque cubre
+   mouse, touch y lapiz de forma unificada -- asi funciona igual si
+   se prueba con el dedo en celular o con el mouse en escritorio/laptop
+   tactil. Cada puntero se rastrea por su pointerId, para poder tocar
+   varios carriles a la vez y soltar cada uno independientemente.
 ══════════════════════════════════════════ */
-const pointerLaneMap = new Map();
-function canvasX(clientX) {
-  const rect=canvas.getBoundingClientRect();
-  return (clientX-rect.left)*(canvas.width/rect.width);
+const pointerLaneMap = new Map(); // pointerId -> laneIdx
+
+function canvasXFromClient(clientX) {
+  const rect = canvas.getBoundingClientRect();
+  // el canvas puede estar escalado por CSS (max-width:100%), asi que
+  // convertimos la posicion del puntero a coordenadas reales del canvas
+  const scaleX = canvas.width / rect.width;
+  return (clientX - rect.left) * scaleX;
 }
+
 function laneFromX(x) {
-  let best=0, bd=Infinity;
-  LANE_X.forEach((lx,i)=>{ const d=Math.abs(lx-x); if(d<bd){bd=d;best=i;} });
+  let best = 0, bestDist = Infinity;
+  LANE_X.forEach((lx, i) => {
+    const d = Math.abs(lx - x);
+    if (d < bestDist) { bestDist = d; best = i; }
+  });
   return best;
 }
+
 canvas.addEventListener('pointerdown', e => {
-  e.preventDefault(); initAudio(); if(audioCtx.state==='suspended') audioCtx.resume();
-  canvas.setPointerCapture(e.pointerId);
-  const lane=laneFromX(canvasX(e.clientX));
-  pointerLaneMap.set(e.pointerId,lane);
-  keyDown[LANES[lane]]=true; tryHit(lane);
+  e.preventDefault();
+  initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  canvas.setPointerCapture(e.pointerId); // asegura recibir el pointerup aunque el dedo/mouse se mueva fuera del canvas
+  const x = canvasXFromClient(e.clientX);
+  const lane = laneFromX(x);
+  pointerLaneMap.set(e.pointerId, lane);
+  keyDown[LANES[lane]] = true;
+  tryHit(lane);
 });
+
 function releasePointer(e) {
-  const lane=pointerLaneMap.get(e.pointerId); if(lane===undefined) return;
+  const lane = pointerLaneMap.get(e.pointerId);
+  if (lane === undefined) return;
   pointerLaneMap.delete(e.pointerId);
-  if(![...pointerLaneMap.values()].includes(lane)) { keyDown[LANES[lane]]=false; stopNote(lane); }
+  // solo soltar la tecla si ningun otro puntero sigue tocando ese mismo carril
+  const stillPressed = [...pointerLaneMap.values()].includes(lane);
+  if (!stillPressed) {
+    keyDown[LANES[lane]] = false;
+    stopNote(lane);
+  }
 }
+
 canvas.addEventListener('pointerup', releasePointer);
 canvas.addEventListener('pointercancel', releasePointer);
+canvas.addEventListener('pointerleave', e => {
+  // si el puntero fue "capturado" con setPointerCapture, pointerleave no
+  // deberia disparar la liberacion (seguimos recibiendo pointerup normal),
+  // pero por seguridad en navegadores que no soportan capture bien:
+  if (e.pointerType === 'mouse') releasePointer(e);
+});
 
 /* ══════════════════════════════════════════
-   LOOP
+   LOOP PRINCIPAL
 ══════════════════════════════════════════ */
-function loop() { update(); draw(); requestAnimationFrame(loop); }
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
 
+/* ══════════════════════════════════════════
+   INICIO
+══════════════════════════════════════════ */
 document.getElementById('startBtn').disabled = true;
 preloadSamples();
 loop();
