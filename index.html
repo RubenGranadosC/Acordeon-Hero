@@ -40,6 +40,22 @@
   }
   #hud span { color: #e8b84b; font-weight: bold; }
   #wrap { position: relative; max-width: 95vw; }
+  #inGameMenuBtn {
+    display: none;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 5;
+    background: rgba(18,16,14,0.75);
+    color: #f2e9dc;
+    border: 1px solid #5a4f3f;
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 20px;
+    cursor: pointer;
+    backdrop-filter: blur(2px);
+  }
+  #inGameMenuBtn:hover { background: rgba(232,184,75,0.2); border-color: #e8b84b; }
   #gameCanvas {
     background: linear-gradient(180deg, #211810 0%, #140f0a 80%, #0a0704 100%);
     border: 2px solid #3a3028;
@@ -188,6 +204,8 @@
 <div id="wrap">
   <canvas id="gameCanvas" width="720" height="500"></canvas>
 
+  <button id="inGameMenuBtn" title="Volver al menú">☰ Menú</button>
+
   <div id="overlay">
 
     <!-- MENÚ PRINCIPAL -->
@@ -235,6 +253,7 @@
       <p id="endAcc" style="color:#b9a98a;"></p>
       <button class="menuBtn" id="btnPlayAgain" style="margin-top:12px;">Repetir</button>
       <button class="backBtn" id="backFromEnd">← Elegir otra canción</button>
+      <button class="backBtn" id="backToMenuFromEnd">← Volver al menú</button>
     </div>
 
   </div>
@@ -494,6 +513,10 @@ function stopNote(laneIdx) {
   activeSrcs[laneIdx] = null;
 }
 
+function stopAllSounds() {
+  activeSrcs.forEach((a, i) => { if (a) stopNote(i); });
+}
+
 // Desbloquear contexto de audio en iOS/Safari
 window.addEventListener('pointerdown', () => { if (audioCtx) audioCtx.resume(); }, { once: false });
 
@@ -532,6 +555,17 @@ function showScreen(id) {
     document.getElementById('hud').style.display = 'flex';
   }
 }
+
+// Detiene la partida en curso (cancion o libre) y regresa al menu principal.
+function goToMenu() {
+  running = false;
+  stopAllSounds();
+  document.getElementById('inGameMenuBtn').style.display = 'none';
+  document.getElementById('overlay').style.display = 'flex';
+  document.getElementById('hud').style.display = 'flex';
+  showScreen('screenMenu');
+}
+document.getElementById('inGameMenuBtn').addEventListener('click', goToMenu);
 
 function buildSongList() {
   const list = document.getElementById('songList');
@@ -619,6 +653,7 @@ document.getElementById('backFromPlay').addEventListener('click', () => {
 document.getElementById('backFromEnd').addEventListener('click', () => {
   showScreen('screenSongs');
 });
+document.getElementById('backToMenuFromEnd').addEventListener('click', goToMenu);
 document.getElementById('btnPlayAgain').addEventListener('click', () => {
   showScreen('screenPlay');
 });
@@ -639,6 +674,7 @@ function startGame() {
   running = true;
   nextGapFrames = mode === 'song' ? framesForNextNote() : Infinity;
   document.getElementById('hud').style.display = mode === 'free' ? 'none' : 'flex';
+  document.getElementById('inGameMenuBtn').style.display = 'block';
   updateHUD();
   document.getElementById('overlay').style.display = 'none';
 }
@@ -646,6 +682,8 @@ function startGame() {
 function endGame() {
   running = false;
   gameOver = true;
+  stopAllSounds();
+  document.getElementById('inGameMenuBtn').style.display = 'none';
   const acc = total > 0 ? Math.round((hits / total) * 100) : 100;
   document.getElementById('endScore').textContent = `Puntos: ${score}`;
   document.getElementById('endAcc').textContent   = `Precisión: ${acc}% · Combo máx: ${combo}`;
