@@ -242,15 +242,20 @@ const ACCORD_ROWS = [
   ['Do#','Sol','Sib','Re', 'Mi', 'Sol','Sib','Re', 'Mi', 'Sol','Sib']
 ];
 
-const NOTE_TO_FILE = {
-  'Do':'C4',  'Do#':'Db4',
-  'Re':'D4',
-  'Mib':'Eb4','Mi':'E4',
-  'Fa':'F4',  'Fa#':'Gb4',
-  'Sol':'G4', 'Lab':'Ab4',
-  'La':'A4',
-  'Sib':'Bb4','Si':'B4'
+// Clase de tono (sin octava) de cada nombre de nota.
+// La octava real se calcula más abajo según la posición horizontal:
+// el botón más a la izquierda de cada nota es la octava más grave,
+// y cada vez que la misma nota reaparece más a la derecha sube una octava.
+const NOTE_PITCH_CLASS = {
+  'Do':'C',  'Do#':'Db',
+  'Re':'D',
+  'Mib':'Eb','Mi':'E',
+  'Fa':'F',  'Fa#':'Gb',
+  'Sol':'G', 'Lab':'Ab',
+  'La':'A',
+  'Sib':'Bb','Si':'B'
 };
+const ACCORD_BASE_OCTAVE = 3; // octava del botón más a la izquierda de cada nota
 
 // Geometría diagonal (igual que Mezquite):
 // h1 (arriba) y h3 (abajo) comparten el mismo X inicial (Si y Do# alineados).
@@ -265,10 +270,10 @@ const ACCORD_ROW_Y = [H*0.28, H*0.52, H*0.76];
 
 function buildAccordionButtons() {
   const btns = [];
-  let idx = 0, sibSeen = 0;
+  let idx = 0;
   // startX de h2 (12 botones, 11 gaps)
   // h1 y h3 comparten el mismo startX → Si(h1,col0) y Do#(h3,col0) quedan en la misma X
-  // h2 está offset +0.5*sp → Fa# queda entre ellos en X (y en diferente Y)
+  // h2 está offset -0.5*sp → Fa# queda a la izquierda de ellos en X (y en diferente Y)
   const base = (W - 11 * ACCORD_SP) / 2;
   const rowStartX = [
     base,                          // h1: Si en col 0
@@ -278,17 +283,27 @@ function buildAccordionButtons() {
 
   ACCORD_ROWS.forEach((row, ri) => {
     row.forEach((label, ci) => {
-      let sampleKey = NOTE_TO_FILE[label] || null;
-      if (label === 'Sib') {
-        sibSeen++;
-        sampleKey = sibSeen % 2 === 1 ? 'Bb4' : 'Bb5';
-      }
       const x = rowStartX[ri] + ci * ACCORD_SP;
       const y = ACCORD_ROW_Y[ri];
-      btns.push({ label, x, y, sampleKey, idx });
+      btns.push({ label, x, y, idx });
       idx++;
     });
   });
+
+  // Asignar octava según posición horizontal: para cada nombre de nota,
+  // se ordenan todas sus apariciones de izquierda a derecha y se les
+  // asigna octava creciente empezando en ACCORD_BASE_OCTAVE.
+  // Ej: Sol → G3, G4, G5, G6, G7 (de izq a der) · La → A3, A4, A5
+  const groups = {};
+  btns.forEach(b => { (groups[b.label] = groups[b.label] || []).push(b); });
+  Object.values(groups).forEach(group => {
+    group.sort((a, b) => a.x - b.x);
+    group.forEach((b, i) => {
+      const pc = NOTE_PITCH_CLASS[b.label];
+      b.sampleKey = pc ? pc + (ACCORD_BASE_OCTAVE + i) : null;
+    });
+  });
+
   return btns;
 }
 const ACCORD_BUTTONS = buildAccordionButtons();
