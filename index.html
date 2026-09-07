@@ -242,93 +242,49 @@ const ACCORD_ROWS = [
   ['Do#','Sol','Sib','Re', 'Mi', 'Sol','Sib','Re', 'Mi', 'Sol','Sib']
 ];
 
-// Clase de tono (sin octava) de cada nombre de nota.
-// La octava real se calcula más abajo según la posición horizontal:
-// el botón más a la izquierda de cada nota es la octava más grave,
-// y cada vez que la misma nota reaparece más a la derecha sube una octava.
-const NOTE_PITCH_CLASS = {
-  'Do':'C',  'Do#':'Db',
-  'Re':'D',
-  'Mib':'Eb','Mi':'E',
-  'Fa':'F',  'Fa#':'Gb',
-  'Sol':'G', 'Lab':'Ab',
-  'La':'A',
-  'Sib':'Bb','Si':'B'
+// Mapa exacto (hilera-columna) → archivo de sonido del repo
+// Reglas: Db=4ta, Gb=4ta, B=4ta, primer Sib=Bb3, luego Bb4, Bb5
+// Todo lo demás en octava 4. Lógica del piano: notas antes de C4→oct3, después→oct4
+// excepto Gb4, B4, Db4 que el repo tiene en octava 4.
+const ACCORD_SAMPLE_MAP = {
+  // h1 (arriba): Si  Re  Fa  Lab Do  Re  Fa  Lab Do  Re  Fa
+  '0-0':'B4',  '0-1':'D4',  '0-2':'F4',  '0-3':'Ab4',
+  '0-4':'C5',  '0-5':'D5',  '0-6':'F5',  '0-7':'Ab5',
+  '0-8':'C6',  '0-9':'D6',  '0-10':'F6',
+  // h2 (medio): Fa# La  Do  Mib Sol La  Do  Mib Sol La  Do  Mib
+  '1-0':'Gb4', '1-1':'A3',  '1-2':'C4',  '1-3':'Eb4',
+  '1-4':'G4',  '1-5':'A4',  '1-6':'C5',  '1-7':'Eb5',
+  '1-8':'G5',  '1-9':'A5',  '1-10':'C6', '1-11':'Eb6',
+  // h3 (abajo): Do# Sol Sib  Re  Mi  Sol Sib  Re  Mi  Sol Sib
+  '2-0':'Db4', '2-1':'G3',  '2-2':'Bb3', '2-3':'D4',
+  '2-4':'E4',  '2-5':'G4',  '2-6':'Bb4', '2-7':'D5',
+  '2-8':'E5',  '2-9':'G5',  '2-10':'Bb5'
 };
-const ACCORD_BASE_OCTAVE = 3; // octava del botón más a la izquierda de cada nota
 
-// Geometría diagonal (igual que Mezquite):
-// h1 (arriba) y h3 (abajo) comparten el mismo X inicial (Si y Do# alineados).
-// h2 (medio, 12 botones) empieza medio paso (0.5*sp) más a la IZQUIERDA que h1/h3,
-// por eso Fa# queda más a la izquierda que Si y Do#.
-const ACCORD_SP   = (W - 56) / 12;   // spacing uniforme de las 3 hileras
-const ACCORD_R    = Math.min(ACCORD_SP * 0.42, 22); // radio del botón
-// Hilera 1 arriba, 2 medio, 3 abajo — compactas como en Mezquite
-// El primer botón de h1 y el último de h3 quedan aprox a la misma altura
-// porque el offset X hace que h1 empiece donde termina h3
+const ACCORD_SP   = (W - 56) / 12;
+const ACCORD_R    = Math.min(ACCORD_SP * 0.42, 22);
 const ACCORD_ROW_Y = [H*0.28, H*0.52, H*0.76];
 
 function buildAccordionButtons() {
   const btns = [];
   let idx = 0;
-  // startX de h2 (12 botones, 11 gaps)
-  // h1 y h3 comparten el mismo startX → Si(h1,col0) y Do#(h3,col0) quedan en la misma X
-  // h2 está offset -0.5*sp → Fa# queda a la izquierda de ellos en X (y en diferente Y)
   const base = (W - 11 * ACCORD_SP) / 2;
+  // h1 y h3: misma X (Si col0 = Do# col0 en X)
+  // h2: medio paso a la IZQUIERDA (Fa# queda antes de Si/Do#)
   const rowStartX = [
-    base,                          // h1: Si en col 0
-    base - 0.5 * ACCORD_SP,       // h2: Fa# medio paso a la IZQUIERDA de Si/Do#
-    base                           // h3: Do# alineado con Si (misma X)
+    base,                     // h1
+    base - 0.5 * ACCORD_SP,  // h2: Fa# más a la izquierda
+    base                      // h3: mismo inicio que h1
   ];
-
   ACCORD_ROWS.forEach((row, ri) => {
     row.forEach((label, ci) => {
       const x = rowStartX[ri] + ci * ACCORD_SP;
       const y = ACCORD_ROW_Y[ri];
-      btns.push({ label, x, y, ri, idx });
+      const sampleKey = ACCORD_SAMPLE_MAP[`${ri}-${ci}`] || null;
+      btns.push({ label, x, y, ri, sampleKey, idx });
       idx++;
     });
   });
-
-  // Octava según el acordeón real:
-  // Cada nota tiene una hilera "principal" donde completa su ciclo de 4 botones
-  // (ahí la octava sube cada 4 botones: p.ej. Sol en la fila de Do# → G3, G4, G5).
-  // Si esa misma nota también aparece suelta en la hilera vecina, esa aparición NO
-  // es una octava nueva: toma la MISMA octava que el botón principal más cercano
-  // en X (y si hay empate exacto —como Re—, el de la izquierda).
-  const byLabel = {};
-  btns.forEach(b => {
-    byLabel[b.label] = byLabel[b.label] || {};
-    (byLabel[b.label][b.ri] = byLabel[b.label][b.ri] || []).push(b);
-  });
-
-  Object.values(byLabel).forEach(rowsForLabel => {
-    const rowIdxs = Object.keys(rowsForLabel).map(Number);
-    let primaryRi = rowIdxs[0];
-    rowIdxs.forEach(ri => {
-      if (rowsForLabel[ri].length > rowsForLabel[primaryRi].length) primaryRi = ri;
-    });
-    const primaryGroup = rowsForLabel[primaryRi].slice().sort((a, b) => a.x - b.x);
-    primaryGroup.forEach((b, i) => { b.octave = ACCORD_BASE_OCTAVE + i; });
-
-    rowIdxs.forEach(ri => {
-      if (ri === primaryRi) return;
-      rowsForLabel[ri].forEach(b => {
-        let best = primaryGroup[0];
-        primaryGroup.forEach(p => {
-          const d = Math.abs(p.x - b.x), bd = Math.abs(best.x - b.x);
-          if (d < bd - 0.01 || (Math.abs(d - bd) < 0.01 && p.x < best.x)) best = p;
-        });
-        b.octave = best.octave;
-      });
-    });
-  });
-
-  btns.forEach(b => {
-    const pc = NOTE_PITCH_CLASS[b.label];
-    b.sampleKey = pc ? pc + b.octave : null;
-  });
-
   return btns;
 }
 const ACCORD_BUTTONS = buildAccordionButtons();
