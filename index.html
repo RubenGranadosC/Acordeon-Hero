@@ -285,23 +285,48 @@ function buildAccordionButtons() {
     row.forEach((label, ci) => {
       const x = rowStartX[ri] + ci * ACCORD_SP;
       const y = ACCORD_ROW_Y[ri];
-      btns.push({ label, x, y, idx });
+      btns.push({ label, x, y, ri, idx });
       idx++;
     });
   });
 
-  // Asignar octava según posición horizontal: para cada nombre de nota,
-  // se ordenan todas sus apariciones de izquierda a derecha y se les
-  // asigna octava creciente empezando en ACCORD_BASE_OCTAVE.
-  // Ej: Sol → G3, G4, G5, G6, G7 (de izq a der) · La → A3, A4, A5
-  const groups = {};
-  btns.forEach(b => { (groups[b.label] = groups[b.label] || []).push(b); });
-  Object.values(groups).forEach(group => {
-    group.sort((a, b) => a.x - b.x);
-    group.forEach((b, i) => {
-      const pc = NOTE_PITCH_CLASS[b.label];
-      b.sampleKey = pc ? pc + (ACCORD_BASE_OCTAVE + i) : null;
+  // Octava según el acordeón real:
+  // Cada nota tiene una hilera "principal" donde completa su ciclo de 4 botones
+  // (ahí la octava sube cada 4 botones: p.ej. Sol en la fila de Do# → G3, G4, G5).
+  // Si esa misma nota también aparece suelta en la hilera vecina, esa aparición NO
+  // es una octava nueva: toma la MISMA octava que el botón principal más cercano
+  // en X (y si hay empate exacto —como Re—, el de la izquierda).
+  const byLabel = {};
+  btns.forEach(b => {
+    byLabel[b.label] = byLabel[b.label] || {};
+    (byLabel[b.label][b.ri] = byLabel[b.label][b.ri] || []).push(b);
+  });
+
+  Object.values(byLabel).forEach(rowsForLabel => {
+    const rowIdxs = Object.keys(rowsForLabel).map(Number);
+    let primaryRi = rowIdxs[0];
+    rowIdxs.forEach(ri => {
+      if (rowsForLabel[ri].length > rowsForLabel[primaryRi].length) primaryRi = ri;
     });
+    const primaryGroup = rowsForLabel[primaryRi].slice().sort((a, b) => a.x - b.x);
+    primaryGroup.forEach((b, i) => { b.octave = ACCORD_BASE_OCTAVE + i; });
+
+    rowIdxs.forEach(ri => {
+      if (ri === primaryRi) return;
+      rowsForLabel[ri].forEach(b => {
+        let best = primaryGroup[0];
+        primaryGroup.forEach(p => {
+          const d = Math.abs(p.x - b.x), bd = Math.abs(best.x - b.x);
+          if (d < bd - 0.01 || (Math.abs(d - bd) < 0.01 && p.x < best.x)) best = p;
+        });
+        b.octave = best.octave;
+      });
+    });
+  });
+
+  btns.forEach(b => {
+    const pc = NOTE_PITCH_CLASS[b.label];
+    b.sampleKey = pc ? pc + b.octave : null;
   });
 
   return btns;
