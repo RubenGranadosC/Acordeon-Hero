@@ -702,7 +702,7 @@ function update(){
         n.fired=true; n.hit=false;
       }
     });
-    const spd=NOTE_SPEED*DIFFICULTY[difficulty].speedMult;
+    const spd=NOTE_SPEED*DIFFICULTY[difficulty].speedMult*(effectiveBpm()/currentSong.bpm);
     notes.forEach(n=>{
       if(n.hit||n.missed) return;
       n.y+=spd;
